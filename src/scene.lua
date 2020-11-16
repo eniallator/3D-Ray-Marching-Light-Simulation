@@ -2,6 +2,8 @@ local rayMarchingShader = love.graphics.newShader('src/ray-marcher.frag')
 local shaderImage = love.graphics.newImage(love.image.newImageData(1, 1))
 
 return function(args)
+    args = args or {}
+
     local scene = {}
     scene.objects = {}
     scene.lights = {}
@@ -26,6 +28,10 @@ return function(args)
         local oldShader = love.graphics.getShader()
 
         love.graphics.setShader(rayMarchingShader)
+
+        rayMarchingShader:send('cameraRotation', {self.camera.yaw, self.camera.pitch})
+        rayMarchingShader:send('cameraFov', self.camera.fov)
+
         love.graphics.draw(shaderImage, x, y, 0, width / shaderImage:getWidth(), height / shaderImage:getHeight())
 
         love.graphics.setShader(oldShader)
@@ -33,4 +39,3 @@ return function(args)
 
     return scene
 end
--- local verticalFovRatio = 9 / 14
