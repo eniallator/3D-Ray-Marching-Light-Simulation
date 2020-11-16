@@ -5,6 +5,9 @@ return function(args)
     args = args or {}
 
     local scene = {}
+    scene.maxDistance = args.maxDistance or 500
+    scene.collisionTolerance = args.collisionTolerance or 0.1
+
     scene.objects = {}
     scene.lights = {}
     scene.camera = {
@@ -13,7 +16,7 @@ return function(args)
         z = 0,
         yaw = 0,
         pitch = 0,
-        fov = math.pi * 7 / 6
+        fov = math.pi * 5 / 6
     }
 
     function scene:setCamera(x, y, z, yaw, pitch)
@@ -29,6 +32,9 @@ return function(args)
 
         love.graphics.setShader(rayMarchingShader)
 
+        rayMarchingShader:send('maxDistance', self.maxDistance)
+        rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
+        rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
         rayMarchingShader:send('cameraRotation', {self.camera.yaw, self.camera.pitch})
         rayMarchingShader:send('cameraFov', self.camera.fov)
 
