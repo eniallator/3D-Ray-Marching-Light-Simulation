@@ -5,7 +5,7 @@ return function(args)
     args = args or {}
 
     local scene = {}
-    scene.maxDistance = args.maxDistance or 500
+    scene.maxDistance = args.maxDistance or 130
     scene.collisionTolerance = args.collisionTolerance or 0.1
 
     scene.objects = {}
@@ -32,6 +32,7 @@ return function(args)
 
         love.graphics.setShader(rayMarchingShader)
 
+        rayMarchingShader:send('aspectRatio', width / height)
         rayMarchingShader:send('maxDistance', self.maxDistance)
         rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
         rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
