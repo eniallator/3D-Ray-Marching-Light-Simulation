@@ -7,7 +7,7 @@ uniform highp vec2 cameraRotation;
 uniform highp float cameraFov;
 
 struct ObjectData {
-    highp float distance;
+    highp float dist;
     highp vec4 colour;
     // highp vec3 surfaceNormal;
     // highp float refactiveIndex;
@@ -24,8 +24,13 @@ highp ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
         mediump float dy = max(cubePos.y - cubeDim.y / 2 - pos.y, max(0, pos.y - cubePos.y - cubeDim.y / 2));
         mediump float dz = max(cubePos.z - cubeDim.z / 2 - pos.z, max(0, pos.z - cubePos.z - cubeDim.z / 2));
         highp float dist = sqrt(dx * dx + dy * dy + dz * dz);
-        if (dist < closestObject.distance) {
-            closestObject = ObjectData(dist);
+        if (dist < closestObject.dist) {
+            closestObject = ObjectData(dist, vec4(
+                (cubePos.x + cubeDim.x / 2 - pos.x) / cubeDim.x,
+                (cubePos.y + cubeDim.y / 2 - pos.y) / cubeDim.y,
+                (cubePos.z + cubeDim.z / 2 - pos.z) / cubeDim.z,
+                1.0
+            ));
         }
     }
     return closestObject;
@@ -41,30 +46,37 @@ highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) 
         mediump float dy = sphere.y - pos.y;
         mediump float dz = sphere.z - pos.z;
         highp float dist =  sqrt(dx * dx + dy * dy + dz * dz) - sphere.w;
-        if (dist < closestObject.distance) {
-            closestObject = ObjectData(dist);
+        if (dist < closestObject.dist) {
+            closestObject = ObjectData(dist, vec4(
+                (sphere.x + sphere.w / 2 - pos.x) / sphere.w,
+                (sphere.y + sphere.w / 2 - pos.y) / sphere.w,
+                (sphere.z + sphere.w / 2 - pos.z) / sphere.w,
+                1.0
+            ));
         }
     }
     return closestObject;
 }
 
-highp float distanceEstimator(in vec3 pos) {
-    ObjectData closestObject = ObjectData(maxDistance);
+highp ObjectData distanceEstimator(in vec3 pos) {
+    ObjectData closestObject = ObjectData(maxDistance, vec4(0));
     closestObject = sphereDistanceEstimator(pos, closestObject);
     closestObject = cubeDistanceEstimator(pos, closestObject);
-    return closestObject.distance;
+    return closestObject;
 }
 
 mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
     mediump float distanceTravelled = 0.0;
+    highp vec4 colour = vec4(1.0);
     while (distanceTravelled < maxDistance) {
-        highp float stepSize = distanceEstimator(pos);
-        distanceTravelled += stepSize;
-        if (stepSize < collisionTolerance) {
+        highp ObjectData closestObject = distanceEstimator(pos);
+        distanceTravelled += closestObject.dist;
+        if (closestObject.dist < collisionTolerance) {
             highp float depth = distanceTravelled / maxDistance;
-            return vec4(1 - depth, 1 - depth, 1 - depth, 1.0);
+            highp vec4 shading = vec4(1 - depth, 1 - depth, 1 - depth, 1.0);
+            return closestObject.colour * shading;
         }
-        pos += dirNorm * stepSize;
+        pos += dirNorm * closestObject.dist;
     }
     return vec4(0, 0, 0, 1.0);
 }
