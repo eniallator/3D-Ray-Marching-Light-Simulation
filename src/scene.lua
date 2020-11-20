@@ -31,12 +31,41 @@ return function(args)
         table.insert(self.objects.spheres, {x, y, z, radius})
     end
 
+    function scene:updateDirNorm()
+        local xzlen = math.cos(self.camera.yaw)
+        self.camera.dirNorm = {
+            x = xzlen * math.cos(self.camera.pitch),
+            y = math.sin(self.camera.yaw),
+            z = xzlen * math.sin(-self.camera.pitch)
+        }
+    end
+
     function scene:setCamera(x, y, z, yaw, pitch)
         self.camera.x = x or self.camera.x
         self.camera.y = y or self.camera.y
         self.camera.z = z or self.camera.z
         self.camera.yaw = yaw or self.camera.yaw
         self.camera.pitch = pitch or self.camera.pitch
+        if yaw or pitch then
+            self:updateDirNorm()
+        end
+    end
+
+    function scene:offsetCamera(x, y, z, yaw, pitch)
+        self.camera.x = self.camera.x + (x or 0)
+        self.camera.y = self.camera.y + (y or 0)
+        self.camera.z = self.camera.z + (z or 0)
+        self.camera.yaw = self.camera.yaw + (yaw or 0)
+        self.camera.pitch = self.camera.pitch + (pitch or 0)
+        if yaw or pitch then
+            self:updateDirNorm()
+        end
+    end
+
+    function scene:addRelativePosition(x, y, z)
+        self.camera.x = self.camera.x + self.camera.dirNorm.x * x
+        self.camera.y = self.camera.y + self.camera.dirNorm.y * y
+        self.camera.z = self.camera.z + self.camera.dirNorm.z * z
     end
 
     function scene:draw(x, y, width, height)
@@ -62,6 +91,8 @@ return function(args)
 
         love.graphics.setShader(oldShader)
     end
+
+    scene:updateDirNorm()
 
     return scene
 end
