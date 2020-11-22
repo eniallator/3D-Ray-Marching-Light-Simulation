@@ -3,8 +3,8 @@ uniform lowp float maxDistance;
 uniform mediump float collisionTolerance;
 
 uniform highp vec3 cameraPos;
-uniform highp vec2 cameraRotation;
-uniform highp float cameraFov;
+uniform highp vec3 cameraDirNorm;
+uniform highp float cameraViewPortDist;
 
 struct ObjectData {
     highp float dist;
@@ -16,7 +16,7 @@ struct ObjectData {
 
 uniform lowp vec3 cubeData[200];
 uniform lowp int numCubes;
-highp ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
+ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < numCubes; i ++) {
         vec3 cubePos = cubeData[i * 2];
         vec3 cubeDim = cubeData[i * 2 + 1];
@@ -81,19 +81,12 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
     return vec4(0, 0, 0, 1.0);
 }
 
-vec4 effect(in vec4 in_colour, in sampler2D texture, in vec2 texture_coords, in vec2 screen_coords ) {
-    highp float verticalFov = cameraFov / aspectRatio;
-    highp vec2 rayRotation = vec2(
-        cameraRotation.x - cameraFov / 2 + texture_coords.x * cameraFov,
-        cameraRotation.y - verticalFov / 2 + texture_coords.y * verticalFov
-    );
-    highp float xzlen = cos(rayRotation.x);
-    highp vec3 dirNorm = vec3(
-        xzlen * cos(rayRotation.y),
-        sin(rayRotation.x),
-        xzlen * sin(-rayRotation.y)
-    );
-    highp vec4 colour = rayMarch(cameraPos, dirNorm);
+vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
+    vec3 viewPlaneY = cross(cameraDirNorm, vec3(0, 1, 0));
+    vec3 viewPlaneX = cross(cameraDirNorm, viewPlaneY);
+    vec2 relativeOffset = (textureCoords - vec2(0.5)) * vec2(aspectRatio, 1);
+    vec3 dirNorm = normalize(cameraViewPortDist * cameraDirNorm + relativeOffset.x * viewPlaneX + relativeOffset.y * viewPlaneY);
 
+    highp vec4 colour = rayMarch(cameraPos, dirNorm);
     return colour;
 }

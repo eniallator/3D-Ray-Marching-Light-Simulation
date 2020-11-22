@@ -19,7 +19,7 @@ return function(args)
         z = 0,
         yaw = 0,
         pitch = 0,
-        fov = math.pi * 5 / 6
+        viewPortDist = 1
     }
 
     function scene:addCube(x, y, z, width, height, depth)
@@ -78,8 +78,8 @@ return function(args)
         rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
 
         rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
-        rayMarchingShader:send('cameraRotation', {self.camera.yaw, self.camera.pitch})
-        rayMarchingShader:send('cameraFov', self.camera.fov)
+        rayMarchingShader:send('cameraDirNorm', {self.camera.dirNorm.x, self.camera.dirNorm.y, self.camera.dirNorm.z})
+        rayMarchingShader:send('cameraViewPortDist', self.camera.viewPortDist)
 
         rayMarchingShader:send('cubeData', unpack(self.objects.cubes))
         rayMarchingShader:send('numCubes', math.floor(#self.objects.cubes / 2))
