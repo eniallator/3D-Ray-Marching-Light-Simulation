@@ -147,8 +147,8 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
 }
 
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
-    vec3 viewPlaneX = cross(cameraDirNorm, vec3(0, 1, 0));
-    vec3 viewPlaneY = cross(cameraDirNorm, viewPlaneX);
+    vec3 viewPlaneX = normalize(cross(cameraDirNorm, vec3(0, 1, 0)));
+    vec3 viewPlaneY = normalize(cross(cameraDirNorm, viewPlaneX));
     vec2 relativeOffset = (textureCoords - vec2(0.5)) * vec2(aspectRatio, 1);
     vec3 dirNorm = normalize(
         cameraViewPortDist * cameraDirNorm
