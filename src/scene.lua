@@ -1,6 +1,23 @@
 local rayMarchingShader = love.graphics.newShader('src/ray-marcher.frag')
 local shaderImage = love.graphics.newImage(love.image.newImageData(1, 1))
 
+local function cross(vecA, vecB)
+    return {
+        x = vecA.y * vecB.z - vecA.z * vecB.y,
+        y = vecA.z * vecB.x - vecA.x * vecB.z,
+        z = vecA.x * vecB.y - vecA.y * vecB.x
+    }
+end
+
+local function normalize(vec)
+    local length = math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
+    return {
+        x = vec.x / length,
+        y = vec.y / length,
+        z = vec.z / length
+    }
+end
+
 return function(args)
     args = args or {}
 
@@ -52,12 +69,13 @@ return function(args)
         }
     end
 
-    function scene:setCamera(x, y, z, yaw, pitch)
+    function scene:setCamera(x, y, z, yaw, pitch, viewPortDist)
         self.camera.x = x or self.camera.x
         self.camera.y = y or self.camera.y
         self.camera.z = z or self.camera.z
         self.camera.yaw = yaw or self.camera.yaw
         self.camera.pitch = pitch or self.camera.pitch
+        self.camera.viewPortDist = viewPortDist or self.camera.viewPortDist
         if yaw or pitch then
             self:updateDirNorm()
         end
@@ -75,9 +93,12 @@ return function(args)
     end
 
     function scene:addRelativePosition(x, y, z)
-        self.camera.x = self.camera.x + self.camera.dirNorm.x * x
-        self.camera.y = self.camera.y + self.camera.dirNorm.y * y
-        self.camera.z = self.camera.z + self.camera.dirNorm.z * z
+        local xAxis = self.camera.dirNorm
+        local zAxis = normalize(cross(xAxis, {x = 0, y = 1, z = 0}))
+        local yAxis = normalize(cross(xAxis, zAxis))
+        self.camera.x = self.camera.x + x * xAxis.x - y * yAxis.x + z * zAxis.x
+        self.camera.y = self.camera.y + x * xAxis.y - y * yAxis.y + z * zAxis.y
+        self.camera.z = self.camera.z + x * xAxis.z - y * yAxis.z + z * zAxis.z
     end
 
     function scene:draw(x, y, width, height)

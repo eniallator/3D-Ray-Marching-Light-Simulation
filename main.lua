@@ -35,10 +35,10 @@ function love.update(dt)
     if keys.state.e then
         relativePosOffset.y = relativePosOffset.y - positionSensitivity * dt
     end
-    if keys.state.a then
+    if keys.state.d then
         relativePosOffset.z = relativePosOffset.z + positionSensitivity * dt
     end
-    if keys.state.d then
+    if keys.state.a then
         relativePosOffset.z = relativePosOffset.z - positionSensitivity * dt
     end
     scene:addRelativePosition(relativePosOffset.x, relativePosOffset.y, relativePosOffset.z)
