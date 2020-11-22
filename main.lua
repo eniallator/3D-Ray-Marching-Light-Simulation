@@ -5,9 +5,10 @@ local positionSensitivity = 50
 
 function love.load()
     scene = Scene()
-    scene:addCube(70, 10, -10, 10, 10, 10)
-    scene:addCube(70, 10, 10, 10, 10, 10)
-    scene:addSphere(70, -10, 10, 5)
+    scene:addCube(30, 10, -10, 10, 10, 10)
+    scene:addCube(30, 10, 10, 10, 10, 10)
+    scene:addInsideCube(0, 0, 0, 100, 100, 100)
+    scene:addSphere(30, -10, 10, 5)
 end
 
 function love.mousemoved(x, y, dx, dy)

@@ -9,8 +9,10 @@ return function(args)
     scene.collisionTolerance = args.collisionTolerance or 0.1
 
     scene.objects = {
-        cubes = {},
-        spheres = {}
+        cube = {},
+        insideCube = {},
+        sphere = {},
+        cylinder = {}
     }
     scene.lights = {}
     scene.camera = {
@@ -23,12 +25,22 @@ return function(args)
     }
 
     function scene:addCube(x, y, z, width, height, depth)
-        table.insert(self.objects.cubes, {x, y, z})
-        table.insert(self.objects.cubes, {width, height, depth})
+        table.insert(self.objects.cube, {x, y, z})
+        table.insert(self.objects.cube, {width, height, depth})
+    end
+
+    function scene:addInsideCube(x, y, z, width, height, depth)
+        table.insert(self.objects.insideCube, {x, y, z})
+        table.insert(self.objects.insideCube, {width, height, depth})
     end
 
     function scene:addSphere(x, y, z, radius)
-        table.insert(self.objects.spheres, {x, y, z, radius})
+        table.insert(self.objects.sphere, {x, y, z, radius})
+    end
+
+    function scene:addCylinder(x, y, z, radius, height)
+        table.insert(self.objects.cylinder, {x, y, z})
+        table.insert(self.objects.cylinder, {radius, height, 0})
     end
 
     function scene:updateDirNorm()
@@ -81,11 +93,12 @@ return function(args)
         rayMarchingShader:send('cameraDirNorm', {self.camera.dirNorm.x, self.camera.dirNorm.y, self.camera.dirNorm.z})
         rayMarchingShader:send('cameraViewPortDist', self.camera.viewPortDist)
 
-        rayMarchingShader:send('cubeData', unpack(self.objects.cubes))
-        rayMarchingShader:send('numCubes', math.floor(#self.objects.cubes / 2))
-
-        rayMarchingShader:send('sphereData', unpack(self.objects.spheres))
-        rayMarchingShader:send('numSpheres', math.floor(#self.objects.spheres))
+        for name, data in pairs(self.objects) do
+            if #data > 0 then
+                rayMarchingShader:send(name .. 'Data', unpack(data))
+                rayMarchingShader:send(name .. 'Count', #data)
+            end
+        end
 
         love.graphics.draw(shaderImage, x, y, 0, width / shaderImage:getWidth(), height / shaderImage:getHeight())
 

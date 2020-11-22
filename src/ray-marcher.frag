@@ -15,15 +15,21 @@ struct ObjectData {
 
 
 uniform lowp vec3 cubeData[200];
-uniform lowp int numCubes;
+uniform lowp int cubeCount;
 ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
-    for (int i = 0; i < numCubes; i ++) {
+    for (int i = 0; i < cubeCount / 2; i ++) {
         vec3 cubePos = cubeData[i * 2];
         vec3 cubeDim = cubeData[i * 2 + 1];
         mediump float dx = max(cubePos.x - cubeDim.x / 2 - pos.x, max(0, pos.x - cubePos.x - cubeDim.x / 2));
         mediump float dy = max(cubePos.y - cubeDim.y / 2 - pos.y, max(0, pos.y - cubePos.y - cubeDim.y / 2));
         mediump float dz = max(cubePos.z - cubeDim.z / 2 - pos.z, max(0, pos.z - cubePos.z - cubeDim.z / 2));
-        highp float dist = sqrt(dx * dx + dy * dy + dz * dz);
+        highp float dist;
+        if (dx + dy + dz == 0) {
+            vec3 distVec = abs(pos - cubePos) - cubeDim / 2;
+            dist = max(distVec.x, max(distVec.y, distVec.z));
+        } else {
+            dist = sqrt(dx * dx + dy * dy + dz * dz);
+        }
         if (dist < closestObject.dist) {
             closestObject = ObjectData(dist, vec4(
                 (cubePos.x + cubeDim.x / 2 - pos.x) / cubeDim.x,
@@ -37,10 +43,34 @@ ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
 }
 
 
+uniform lowp vec3 insideCubeData[200];
+uniform lowp int insideCubeCount;
+ObjectData insideCubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
+    for (int i = 0; i < insideCubeCount / 2; i ++) {
+        vec3 insideCubePos = insideCubeData[i * 2];
+        vec3 insideCubeDim = insideCubeData[i * 2 + 1];
+        mediump float dx = max(insideCubePos.x - insideCubeDim.x / 2 - pos.x, max(0, pos.x - insideCubePos.x - insideCubeDim.x / 2));
+        mediump float dy = max(insideCubePos.y - insideCubeDim.y / 2 - pos.y, max(0, pos.y - insideCubePos.y - insideCubeDim.y / 2));
+        mediump float dz = max(insideCubePos.z - insideCubeDim.z / 2 - pos.z, max(0, pos.z - insideCubePos.z - insideCubeDim.z / 2));
+        highp float dist;
+        if (dx + dy + dz == 0) {
+            vec3 distVec = abs(pos - insideCubePos) - insideCubeDim / 2;
+            dist = max(distVec.x, max(distVec.y, distVec.z));
+        } else {
+            dist = sqrt(dx * dx + dy * dy + dz * dz);
+        }
+        if (-dist < closestObject.dist) {
+            closestObject = ObjectData(-dist, vec4(1.0));
+        }
+    }
+    return closestObject;
+}
+
+
 uniform lowp vec4 sphereData[100];
-uniform lowp int numSpheres;
+uniform lowp int sphereCount;
 highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) {
-    for (int i = 0; i < numSpheres; i ++) {
+    for (int i = 0; i < sphereCount; i ++) {
         vec4 sphere = sphereData[i];
         mediump float dx = sphere.x - pos.x;
         mediump float dy = sphere.y - pos.y;
@@ -60,8 +90,9 @@ highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) 
 
 highp ObjectData distanceEstimator(in vec3 pos) {
     ObjectData closestObject = ObjectData(maxDistance, vec4(0));
-    closestObject = sphereDistanceEstimator(pos, closestObject);
     closestObject = cubeDistanceEstimator(pos, closestObject);
+    closestObject = insideCubeDistanceEstimator(pos, closestObject);
+    closestObject = sphereDistanceEstimator(pos, closestObject);
     return closestObject;
 }
 
@@ -82,10 +113,14 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
 }
 
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
-    vec3 viewPlaneY = cross(cameraDirNorm, vec3(0, 1, 0));
-    vec3 viewPlaneX = cross(cameraDirNorm, viewPlaneY);
+    vec3 viewPlaneX = cross(cameraDirNorm, vec3(0, 1, 0));
+    vec3 viewPlaneY = cross(cameraDirNorm, viewPlaneX);
     vec2 relativeOffset = (textureCoords - vec2(0.5)) * vec2(aspectRatio, 1);
-    vec3 dirNorm = normalize(cameraViewPortDist * cameraDirNorm + relativeOffset.x * viewPlaneX + relativeOffset.y * viewPlaneY);
+    vec3 dirNorm = normalize(
+        cameraViewPortDist * cameraDirNorm
+        + relativeOffset.x * viewPlaneX
+        + relativeOffset.y * viewPlaneY
+    );
 
     highp vec4 colour = rayMarch(cameraPos, dirNorm);
     return colour;
