@@ -5,9 +5,9 @@ local positionSensitivity = 50
 
 function love.load()
     scene = Scene()
-    scene:addCube(30, 10, -10, 10, 10, 10)
-    scene:addCube(30, 10, 10, 10, 10, 10)
     scene:addInsideCube(0, 0, 0, 100, 100, 100)
+    scene:addCube(30, 10, -10, 10, 10, 10)
+    scene:addCylinder(30, 10, 10, 5, 10)
     scene:addSphere(30, -10, 10, 5)
 end
 

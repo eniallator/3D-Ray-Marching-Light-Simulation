@@ -88,11 +88,40 @@ highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) 
     return closestObject;
 }
 
+
+uniform lowp vec3 cylinderData[200];
+uniform lowp int cylinderCount;
+highp ObjectData cylinderDistanceEstimator(in vec3 pos, ObjectData closestObject) {
+    for (int i = 0; i < cylinderCount / 2; i ++) {
+        vec3 cylinderPos = cylinderData[i * 2];
+        float radius = cylinderData[i * 2 + 1].x;
+        float height = cylinderData[i * 2 + 1].y;
+
+        vec3 relativePos = cylinderPos - pos;
+        vec2 diff = vec2(
+            max(length(relativePos.xz) - radius, 0),
+            max(abs(relativePos.y) - height / 2, 0)
+        );
+        float dist = length(diff);
+
+        if (dist < closestObject.dist) {
+            closestObject = ObjectData(dist, vec4(
+                (cylinderPos.x + radius / 2 - pos.x) / radius,
+                (cylinderPos.y + height / 2 - pos.y) / height,
+                (cylinderPos.z + radius / 2 - pos.z) / radius,
+                1.0
+            ));
+        }
+    }
+    return closestObject;
+}
+
 highp ObjectData distanceEstimator(in vec3 pos) {
     ObjectData closestObject = ObjectData(maxDistance, vec4(0));
     closestObject = cubeDistanceEstimator(pos, closestObject);
     closestObject = insideCubeDistanceEstimator(pos, closestObject);
     closestObject = sphereDistanceEstimator(pos, closestObject);
+    closestObject = cylinderDistanceEstimator(pos, closestObject);
     return closestObject;
 }
 
