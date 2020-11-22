@@ -98,11 +98,16 @@ highp ObjectData cylinderDistanceEstimator(in vec3 pos, ObjectData closestObject
         float height = cylinderData[i * 2 + 1].y;
 
         vec3 relativePos = cylinderPos - pos;
-        vec2 diff = vec2(
+        vec2 posDiff = vec2(
             max(length(relativePos.xz) - radius, 0),
             max(abs(relativePos.y) - height / 2, 0)
         );
-        float dist = length(diff);
+        float dist;
+        if (posDiff.x + posDiff.y == 0) {
+            dist = max(length(relativePos.xz) - radius, abs(relativePos.y) - height / 2);
+        } else {
+            dist = length(posDiff);
+        }
 
         if (dist < closestObject.dist) {
             closestObject = ObjectData(dist, vec4(
