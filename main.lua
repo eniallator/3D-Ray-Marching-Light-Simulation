@@ -13,7 +13,7 @@ end
 
 function love.mousemoved(x, y, dx, dy)
     if love.mouse.isDown(1) then
-        scene:offsetCamera(nil, nil, nil, -dx * viewAngleSensitivity, -dy * viewAngleSensitivity)
+        scene:offsetCamera(nil, nil, nil, dx * viewAngleSensitivity, dy * viewAngleSensitivity)
     end
 end
 

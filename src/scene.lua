@@ -46,9 +46,9 @@ return function(args)
     function scene:updateDirNorm()
         local xzlen = math.cos(self.camera.yaw)
         self.camera.dirNorm = {
-            x = xzlen * math.cos(self.camera.pitch),
-            y = math.sin(self.camera.yaw),
-            z = xzlen * math.sin(-self.camera.pitch)
+            x = xzlen * math.cos(self.camera.yaw),
+            y = math.sin(self.camera.pitch),
+            z = xzlen * math.sin(-self.camera.yaw)
         }
     end
 
