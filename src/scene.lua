@@ -22,7 +22,7 @@ return function(args)
     args = args or {}
 
     local scene = {}
-    scene.maxDistance = args.maxDistance or 150
+    scene.maxDistance = args.maxDistance or math.sqrt(100 * 100 * 3)
     scene.collisionTolerance = args.collisionTolerance or 0.1
 
     scene.objects = {
@@ -31,7 +31,13 @@ return function(args)
         sphere = {},
         cylinder = {}
     }
-    scene.lights = {}
+    scene.lights = {
+        positions = {},
+        colours = {},
+        brightnesses = {},
+        maxRange = args.lightMaxRange or 150
+    }
+
     scene.camera = {
         x = 0,
         y = 0,
@@ -41,6 +47,12 @@ return function(args)
         roll = 0,
         viewPortDist = 1
     }
+
+    function scene:addLight(x, y, z, r, g, b, brightness)
+        table.insert(scene.lights.positions, {x, y, z})
+        table.insert(scene.lights.colours, {r or 1, g or 1, b or 1, 1})
+        table.insert(scene.lights.brightnesses, brightness or 1)
+    end
 
     function scene:addCube(x, y, z, width, height, depth)
         table.insert(self.objects.cube, {x, y, z})
@@ -131,6 +143,12 @@ return function(args)
         rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
         rayMarchingShader:send('cameraRotationMatrix', self.camera.rotationMatrix)
         rayMarchingShader:send('cameraViewPortDist', self.camera.viewPortDist)
+
+        rayMarchingShader:send('lightPositions', unpack(self.lights.positions))
+        rayMarchingShader:send('lightColours', unpack(self.lights.colours))
+        rayMarchingShader:send('lightBrightnesses', unpack(self.lights.brightnesses))
+        rayMarchingShader:send('lightCount', #self.lights.positions)
+        rayMarchingShader:send('lightMaxRange', self.lights.maxRange)
 
         for name, data in pairs(self.objects) do
             if #data > 0 then
