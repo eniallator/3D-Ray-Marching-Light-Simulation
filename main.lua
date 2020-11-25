@@ -1,14 +1,14 @@
 local Scene, scene = require 'src.scene'
 local keys = require 'src.keys'
 local viewAngleSensitivity = 0.005
-local positionSensitivity = 50
+local positionSensitivity = 30
 
 function love.load()
     scene = Scene()
     scene:addInsideCube(0, 0, 0, 100, 100, 100)
-    scene:addCube(30, 10, -10, 10, 10, 10)
-    scene:addCylinder(30, 10, 10, 5, 10)
-    scene:addSphere(30, -10, 10, 5)
+    scene:addCube(0, 10, -10, 10, 10, 10)
+    scene:addCylinder(0, 10, 10, 5, 10)
+    scene:addSphere(0, -10, 10, 5)
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -29,17 +29,17 @@ function love.update(dt)
     if keys.state.s then
         relativePosOffset.x = relativePosOffset.x - positionSensitivity * dt
     end
-    if keys.state.q then
-        relativePosOffset.y = relativePosOffset.y + positionSensitivity * dt
-    end
     if keys.state.e then
-        relativePosOffset.y = relativePosOffset.y - positionSensitivity * dt
-    end
-    if keys.state.d then
         relativePosOffset.z = relativePosOffset.z + positionSensitivity * dt
     end
-    if keys.state.a then
+    if keys.state.q then
         relativePosOffset.z = relativePosOffset.z - positionSensitivity * dt
+    end
+    if keys.state.a then
+        relativePosOffset.y = relativePosOffset.y + positionSensitivity * dt
+    end
+    if keys.state.d then
+        relativePosOffset.y = relativePosOffset.y - positionSensitivity * dt
     end
     scene:addRelativePosition(relativePosOffset.x, relativePosOffset.y, relativePosOffset.z)
 end

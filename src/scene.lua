@@ -22,7 +22,7 @@ return function(args)
     args = args or {}
 
     local scene = {}
-    scene.maxDistance = args.maxDistance or 130
+    scene.maxDistance = args.maxDistance or 150
     scene.collisionTolerance = args.collisionTolerance or 0.1
 
     scene.objects = {
@@ -38,6 +38,7 @@ return function(args)
         z = 0,
         yaw = 0,
         pitch = 0,
+        roll = 0,
         viewPortDist = 1
     }
 
@@ -60,45 +61,62 @@ return function(args)
         table.insert(self.objects.cylinder, {radius, height, 0})
     end
 
-    function scene:updateDirNorm()
-        local xzlen = math.cos(self.camera.pitch)
-        self.camera.dirNorm = {
-            x = xzlen * math.cos(self.camera.yaw),
-            y = math.sin(self.camera.pitch),
-            z = xzlen * math.sin(-self.camera.yaw)
+    function scene:updateRotationMatrix()
+        local cos_yaw = math.cos(self.camera.yaw)
+        local sin_yaw = math.sin(self.camera.yaw)
+        local cos_pitch = math.cos(self.camera.pitch)
+        local sin_pitch = math.sin(self.camera.pitch)
+        local cos_roll = math.cos(self.camera.roll)
+        local sin_roll = math.sin(self.camera.roll)
+        self.camera.rotationMatrix = {
+            {
+                cos_yaw * cos_pitch,
+                cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll,
+                cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll
+            },
+            {
+                sin_yaw * cos_pitch,
+                sin_yaw * sin_pitch * sin_roll + cos_yaw * cos_roll,
+                sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll
+            },
+            {
+                -sin_pitch,
+                cos_pitch * sin_roll,
+                cos_pitch * cos_roll
+            }
         }
     end
 
-    function scene:setCamera(x, y, z, yaw, pitch, viewPortDist)
+    function scene:setCamera(x, y, z, yaw, pitch, roll, viewPortDist)
         self.camera.x = x or self.camera.x
         self.camera.y = y or self.camera.y
         self.camera.z = z or self.camera.z
         self.camera.yaw = yaw or self.camera.yaw
         self.camera.pitch = pitch or self.camera.pitch
+        self.camera.roll = roll or self.camera.roll
         self.camera.viewPortDist = viewPortDist or self.camera.viewPortDist
-        if yaw or pitch then
-            self:updateDirNorm()
+        if yaw or pitch or roll then
+            self:updateRotationMatrix()
         end
     end
 
-    function scene:offsetCamera(x, y, z, yaw, pitch)
+    function scene:offsetCamera(x, y, z, yaw, pitch, roll)
         self.camera.x = self.camera.x + (x or 0)
         self.camera.y = self.camera.y + (y or 0)
         self.camera.z = self.camera.z + (z or 0)
         self.camera.yaw = self.camera.yaw + (yaw or 0)
         self.camera.pitch = self.camera.pitch + (pitch or 0)
-        if yaw or pitch then
-            self:updateDirNorm()
+        self.camera.roll = self.camera.roll + (roll or 0)
+        if yaw or pitch or roll then
+            self:updateRotationMatrix()
         end
     end
 
     function scene:addRelativePosition(x, y, z)
-        local xAxis = self.camera.dirNorm
-        local zAxis = normalize(cross(xAxis, {x = 0, y = 1, z = 0}))
-        local yAxis = normalize(cross(xAxis, zAxis))
-        self.camera.x = self.camera.x + x * xAxis.x - y * yAxis.x + z * zAxis.x
-        self.camera.y = self.camera.y + x * xAxis.y - y * yAxis.y + z * zAxis.y
-        self.camera.z = self.camera.z + x * xAxis.z - y * yAxis.z + z * zAxis.z
+        local mat = self.camera.rotationMatrix
+        self.camera.x = self.camera.x + x * mat[1][1] + y * mat[1][2] + z * mat[1][3]
+        self.camera.y = self.camera.y + x * mat[2][1] + y * mat[2][2] + z * mat[2][3]
+        self.camera.z = self.camera.z + x * mat[3][1] + y * mat[3][2] + z * mat[3][3]
     end
 
     function scene:draw(x, y, width, height)
@@ -106,12 +124,12 @@ return function(args)
 
         love.graphics.setShader(rayMarchingShader)
 
-        rayMarchingShader:send('aspectRatio', width / height)
+        rayMarchingShader:send('dimensions', {width, height})
         rayMarchingShader:send('maxDistance', self.maxDistance)
         rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
 
         rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
-        rayMarchingShader:send('cameraDirNorm', {self.camera.dirNorm.x, self.camera.dirNorm.y, self.camera.dirNorm.z})
+        rayMarchingShader:send('cameraRotationMatrix', self.camera.rotationMatrix)
         rayMarchingShader:send('cameraViewPortDist', self.camera.viewPortDist)
 
         for name, data in pairs(self.objects) do
@@ -126,7 +144,7 @@ return function(args)
         love.graphics.setShader(oldShader)
     end
 
-    scene:updateDirNorm()
+    scene:updateRotationMatrix()
 
     return scene
 end

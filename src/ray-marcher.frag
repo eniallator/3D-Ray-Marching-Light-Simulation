@@ -1,9 +1,9 @@
-uniform highp float aspectRatio;
+uniform lowp vec2 dimensions;
 uniform lowp float maxDistance;
 uniform mediump float collisionTolerance;
 
 uniform highp vec3 cameraPos;
-uniform highp vec3 cameraDirNorm;
+uniform highp mat3 cameraRotationMatrix;
 uniform highp float cameraViewPortDist;
 
 struct ObjectData {
@@ -132,7 +132,6 @@ highp ObjectData distanceEstimator(in vec3 pos) {
 
 mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
     mediump float distanceTravelled = 0.0;
-    highp vec4 colour = vec4(1.0);
     while (distanceTravelled < maxDistance) {
         highp ObjectData closestObject = distanceEstimator(pos);
         distanceTravelled += closestObject.dist;
