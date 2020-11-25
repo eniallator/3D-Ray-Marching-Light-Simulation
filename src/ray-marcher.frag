@@ -146,15 +146,18 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
 }
 
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
-    vec3 viewPlaneX = normalize(cross(cameraDirNorm, vec3(0, 1, 0)));
-    vec3 viewPlaneY = normalize(cross(cameraDirNorm, viewPlaneX));
-    vec2 relativeOffset = (textureCoords - vec2(0.5)) * vec2(aspectRatio, 1);
-    vec3 dirNorm = normalize(
-        cameraViewPortDist * cameraDirNorm
-        + relativeOffset.x * viewPlaneX
-        + relativeOffset.y * viewPlaneY
-    );
+    int samplesPerAxis = 2;
+    vec4 colour = vec4(0);
+    vec2 coords = dimensions * textureCoords;
+    for (float x = -0.33; x <= 0.33; x += 0.33) {
+        for (float y = -0.33; y <= 0.33; y += 0.33) {
+            vec2 adjustedOffset = (coords + vec2(x, y)) / dimensions;
+            vec2 relativeOffset = (adjustedOffset - vec2(0.5)) * vec2(dimensions.x / dimensions.y, 1);
+            vec3 relativeDir = vec3(cameraViewPortDist, -relativeOffset.x, relativeOffset.y);
+            vec3 dirNorm = normalize(cameraRotationMatrix * relativeDir);
 
-    highp vec4 colour = rayMarch(cameraPos, dirNorm);
+            colour += rayMarch(cameraPos, dirNorm) / 9;
+        }
+    }
     return colour;
 }
