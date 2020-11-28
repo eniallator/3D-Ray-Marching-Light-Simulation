@@ -4,7 +4,15 @@ local viewAngleSensitivity = 0.005
 local positionSensitivity = 30
 
 function love.load()
-    scene = Scene()
+    scene =
+        Scene(
+        {
+            maxDistance = math.sqrt(100 * 100 * 3),
+            collisionTolerance = 0.1,
+            samplesPerAxis = 3,
+            lightMaxRange = 200
+        }
+    )
     scene:addInsideCube(0, 0, 0, 100, 100, 100)
     scene:addCube(0, 10, -10, 10, 10, 10)
     scene:addCylinder(0, 10, 10, 5, 10)

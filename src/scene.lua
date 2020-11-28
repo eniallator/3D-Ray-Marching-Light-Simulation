@@ -22,7 +22,7 @@ return function(args)
     args = args or {}
 
     local scene = {}
-    scene.maxDistance = args.maxDistance or math.sqrt(100 * 100 * 3)
+    scene.maxDistance = args.maxDistance
     scene.collisionTolerance = args.collisionTolerance or 0.1
     scene.samplesPerAxis = args.samplesPerAxis or 2
 

@@ -225,11 +225,10 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
     vec4 colour = vec4(0);
     vec2 coords = dimensions * textureCoords;
-    float rangeExtreme = 0.5 - (
-        mod(samplesPerAxis, 2) == 1
+    float rangeExtreme = mod(samplesPerAxis, 2) == 1
         ? 1 / samplesPerAxis
-        : 1 / (2 * samplesPerAxis)
-    );
+        : 0.5 -  1 / (2 * samplesPerAxis);
+
     for (float x = -rangeExtreme; x <= rangeExtreme; x += 1 / samplesPerAxis) {
         for (float y = -rangeExtreme; y <= rangeExtreme; y += 1 / samplesPerAxis) {
             vec2 adjustedOffset = (coords + vec2(x, y)) / dimensions;
@@ -237,8 +236,8 @@ vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in ve
             vec3 relativeDir = vec3(cameraViewPortDist, -relativeOffset.x, relativeOffset.y);
             vec3 dirNorm = normalize(cameraRotationMatrix * relativeDir);
 
-            colour += rayMarch(cameraPos, dirNorm) / (samplesPerAxis * samplesPerAxis);
+            colour += rayMarch(cameraPos, dirNorm);
         }
     }
-    return colour;
+    return colour / (samplesPerAxis * samplesPerAxis);
 }
