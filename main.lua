@@ -9,7 +9,7 @@ function love.load()
     scene:addCube(0, 10, -10, 10, 10, 10)
     scene:addCylinder(0, 10, 10, 5, 10)
     scene:addSphere(0, -10, 10, 5)
-    scene:addLight(-20, 0, 0)
+    scene:addLight(-20, -20, 0, nil, nil, nil, 1.2)
 end
 
 function love.mousemoved(x, y, dx, dy)

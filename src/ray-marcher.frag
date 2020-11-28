@@ -1,6 +1,7 @@
 uniform lowp vec2 dimensions;
 uniform lowp float maxDistance;
 uniform mediump float collisionTolerance;
+uniform lowp float samplesPerAxis;
 
 uniform highp vec3 cameraPos;
 uniform highp mat3 cameraRotationMatrix;
@@ -16,7 +17,7 @@ struct ObjectData {
     mediump int id;
     highp float dist;
     highp vec4 colour;
-    // highp vec3 surfaceNormal;
+    highp vec3 surfaceNormal;
     // highp float refactiveIndex;
 };
 
@@ -38,12 +39,22 @@ ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
             dist = sqrt(dx * dx + dy * dy + dz * dz);
         }
         if (dist < closestObject.dist) {
+            vec3 diff = pos - cubePos;
+            vec3 absDiff = abs(diff);
+            vec3 surfaceNormal;
+            if (absDiff.x > absDiff.y && absDiff.x > absDiff.z) {
+                surfaceNormal = vec3(diff.x / absDiff.x, 0, 0);
+            } else if (absDiff.y > absDiff.x && absDiff.y > absDiff.z) {
+                surfaceNormal = vec3(0, diff.y / absDiff.y, 0);
+            } else {
+                surfaceNormal = vec3(0, 0, diff.z / absDiff.z);
+            }
             closestObject = ObjectData(i, dist, vec4(
                 (cubePos.x + cubeDim.x / 2 - pos.x) / cubeDim.x,
                 (cubePos.y + cubeDim.y / 2 - pos.y) / cubeDim.y,
                 (cubePos.z + cubeDim.z / 2 - pos.z) / cubeDim.z,
                 1.0
-            ));
+            ), surfaceNormal);
         }
     }
     return closestObject;
@@ -67,7 +78,17 @@ ObjectData insideCubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
             dist = sqrt(dx * dx + dy * dy + dz * dz);
         }
         if (-dist < closestObject.dist) {
-            closestObject = ObjectData(i + 100, -dist, vec4(1.0));
+            vec3 diff = insideCubePos - pos;
+            vec3 absDiff = abs(diff);
+            vec3 surfaceNormal;
+            if (absDiff.x > absDiff.y && absDiff.x > absDiff.z) {
+                surfaceNormal = vec3(diff.x / absDiff.x, 0, 0);
+            } else if (absDiff.y > absDiff.x && absDiff.y > absDiff.z) {
+                surfaceNormal = vec3(0, diff.y / absDiff.y, 0);
+            } else {
+                surfaceNormal = vec3(0, 0, diff.z / absDiff.z);
+            }
+            closestObject = ObjectData(i + 100, -dist, vec4(1.0), surfaceNormal);
         }
     }
     return closestObject;
@@ -79,17 +100,15 @@ uniform lowp int sphereCount;
 highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < sphereCount; i ++) {
         vec4 sphere = sphereData[i];
-        mediump float dx = sphere.x - pos.x;
-        mediump float dy = sphere.y - pos.y;
-        mediump float dz = sphere.z - pos.z;
-        highp float dist =  sqrt(dx * dx + dy * dy + dz * dz) - sphere.w;
+        vec3 diff = sphere.xyz - pos;
+        highp float dist = length(diff) - sphere.w;
         if (dist < closestObject.dist) {
             closestObject = ObjectData(i + 200, dist, vec4(
                 (sphere.x + sphere.w / 2 - pos.x) / sphere.w,
                 (sphere.y + sphere.w / 2 - pos.y) / sphere.w,
                 (sphere.z + sphere.w / 2 - pos.z) / sphere.w,
                 1.0
-            ));
+            ), normalize(pos - sphere.xyz));
         }
     }
     return closestObject;
@@ -106,8 +125,8 @@ highp ObjectData cylinderDistanceEstimator(in vec3 pos, ObjectData closestObject
 
         vec3 relativePos = cylinderPos - pos;
         vec2 posDiff = vec2(
-            max(length(relativePos.xz) - radius, 0),
-            max(abs(relativePos.y) - height / 2, 0)
+            max(length(relativePos.xy) - radius, 0),
+            max(abs(relativePos.z) - height / 2, 0)
         );
         float dist;
         if (posDiff.x + posDiff.y == 0) {
@@ -117,19 +136,26 @@ highp ObjectData cylinderDistanceEstimator(in vec3 pos, ObjectData closestObject
         }
 
         if (dist < closestObject.dist) {
+            vec3 diff = pos - cylinderPos;
+            vec3 surfaceNormal;
+            if (length(relativePos.xy) < radius) {
+                surfaceNormal = normalize(vec3(0, 0, diff.z));
+            } else {
+                surfaceNormal = normalize(vec3(diff.x, diff.y, 0));
+            }
             closestObject = ObjectData(i + 300, dist, vec4(
                 (cylinderPos.x + radius / 2 - pos.x) / radius,
                 (cylinderPos.y + height / 2 - pos.y) / height,
                 (cylinderPos.z + radius / 2 - pos.z) / radius,
                 1.0
-            ));
+            ), surfaceNormal);
         }
     }
     return closestObject;
 }
 
 highp ObjectData distanceEstimator(in vec3 pos) {
-    ObjectData closestObject = ObjectData(-1, maxDistance, vec4(0));
+    ObjectData closestObject = ObjectData(-1, maxDistance, vec4(0), vec3(0));
     closestObject = cubeDistanceEstimator(pos, closestObject);
     closestObject = insideCubeDistanceEstimator(pos, closestObject);
     closestObject = sphereDistanceEstimator(pos, closestObject);
@@ -138,7 +164,7 @@ highp ObjectData distanceEstimator(in vec3 pos) {
 }
 
 
-highp vec4 lightPixel(in ObjectData rayClosestObject, in vec3 pos) {
+highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
     highp vec4 outColour = vec4(0);
     for (int i = 0; i < lightCount; i++) {
         highp float dist = length(lightPositions[i] - pos);
@@ -149,14 +175,23 @@ highp vec4 lightPixel(in ObjectData rayClosestObject, in vec3 pos) {
         mediump float distanceTravelled = 0.0;
         vec3 shadowRayPos = lightPositions[i].xyz;
         vec3 shadowRayDirNorm = normalize(-lightPositions[i] + pos);
-        highp float pixelVisibility = 1.0;
-        highp float smallestDist = maxDistance;
+
+        highp float normDot = dot(shadowRayDirNorm, rayClosestObject.surfaceNormal);
+        if (normDot > 0) {
+            continue;
+        }
+
+        highp float pointVisibility = 1.0;
+        highp float lightAngleVisibility = length(normDot)
+            / (length(shadowRayDirNorm) * length(rayClosestObject.surfaceNormal));
+
+        highp vec3 pointSurfaceNormal = rayClosestObject.surfaceNormal;
         while (distanceTravelled < dist - collisionTolerance) {
             highp ObjectData closestObject = distanceEstimator(shadowRayPos);
             distanceTravelled += closestObject.dist;
             if (closestObject.dist < collisionTolerance) {
                 if (closestObject.id != rayClosestObject.id) {
-                    pixelVisibility = 0.0;
+                    pointVisibility = 0.0;
                 }
                 break;
             }
@@ -167,7 +202,8 @@ highp vec4 lightPixel(in ObjectData rayClosestObject, in vec3 pos) {
             rayClosestObject.colour * lightColours[i]
             * inverseDist * inverseDist
             * lightBrightnesses[i]
-            * pixelVisibility;
+            * lightAngleVisibility
+            * pointVisibility;
     }
     return outColour;
 }
@@ -179,7 +215,7 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
         highp ObjectData closestObject = distanceEstimator(pos);
         distanceTravelled += closestObject.dist;
         if (closestObject.dist < collisionTolerance) {
-            return lightPixel(closestObject, pos);
+            return lightPoint(closestObject, pos);
         }
         pos += dirNorm * closestObject.dist;
     }
@@ -187,17 +223,21 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
 }
 
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
-    int samplesPerAxis = 2;
     vec4 colour = vec4(0);
     vec2 coords = dimensions * textureCoords;
-    for (float x = -0.33; x <= 0.33; x += 0.33) {
-        for (float y = -0.33; y <= 0.33; y += 0.33) {
+    float rangeExtreme = 0.5 - (
+        mod(samplesPerAxis, 2) == 1
+        ? 1 / samplesPerAxis
+        : 1 / (2 * samplesPerAxis)
+    );
+    for (float x = -rangeExtreme; x <= rangeExtreme; x += 1 / samplesPerAxis) {
+        for (float y = -rangeExtreme; y <= rangeExtreme; y += 1 / samplesPerAxis) {
             vec2 adjustedOffset = (coords + vec2(x, y)) / dimensions;
             vec2 relativeOffset = (adjustedOffset - vec2(0.5)) * vec2(dimensions.x / dimensions.y, 1);
             vec3 relativeDir = vec3(cameraViewPortDist, -relativeOffset.x, relativeOffset.y);
             vec3 dirNorm = normalize(cameraRotationMatrix * relativeDir);
 
-            colour += rayMarch(cameraPos, dirNorm) / 9;
+            colour += rayMarch(cameraPos, dirNorm) / (samplesPerAxis * samplesPerAxis);
         }
     }
     return colour;

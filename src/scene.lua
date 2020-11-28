@@ -24,6 +24,7 @@ return function(args)
     local scene = {}
     scene.maxDistance = args.maxDistance or math.sqrt(100 * 100 * 3)
     scene.collisionTolerance = args.collisionTolerance or 0.1
+    scene.samplesPerAxis = args.samplesPerAxis or 2
 
     scene.objects = {
         cube = {},
@@ -35,7 +36,7 @@ return function(args)
         positions = {},
         colours = {},
         brightnesses = {},
-        maxRange = args.lightMaxRange or 150
+        maxRange = args.lightMaxRange or 200
     }
 
     scene.camera = {
@@ -139,6 +140,7 @@ return function(args)
         rayMarchingShader:send('dimensions', {width, height})
         rayMarchingShader:send('maxDistance', self.maxDistance)
         rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
+        rayMarchingShader:send('samplesPerAxis', self.samplesPerAxis)
 
         rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
         rayMarchingShader:send('cameraRotationMatrix', self.camera.rotationMatrix)
