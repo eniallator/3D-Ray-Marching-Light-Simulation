@@ -8,6 +8,7 @@ function love.load()
         Scene(
         {
             maxDistance = math.sqrt(100 * 100 * 3),
+            globalMinLight = 0.2,
             collisionTolerance = 0.1,
             samplesPerAxis = 3,
             lightMaxRange = 200

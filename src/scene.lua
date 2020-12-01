@@ -23,6 +23,7 @@ return function(args)
 
     local scene = {}
     scene.maxDistance = args.maxDistance
+    scene.globalMinLight = args.globalMinLight or 0
     scene.collisionTolerance = args.collisionTolerance or 0.1
     scene.samplesPerAxis = args.samplesPerAxis or 2
 
@@ -139,6 +140,7 @@ return function(args)
 
         rayMarchingShader:send('dimensions', {width, height})
         rayMarchingShader:send('maxDistance', self.maxDistance)
+        rayMarchingShader:send('globalMinLight', self.globalMinLight)
         rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
         rayMarchingShader:send('samplesPerAxis', self.samplesPerAxis)
 
@@ -146,9 +148,11 @@ return function(args)
         rayMarchingShader:send('cameraRotationMatrix', self.camera.rotationMatrix)
         rayMarchingShader:send('cameraViewPortDist', self.camera.viewPortDist)
 
-        rayMarchingShader:send('lightPositions', unpack(self.lights.positions))
-        rayMarchingShader:send('lightColours', unpack(self.lights.colours))
-        rayMarchingShader:send('lightBrightnesses', unpack(self.lights.brightnesses))
+        if #self.lights.positions > 0 then
+            rayMarchingShader:send('lightPositions', unpack(self.lights.positions))
+            rayMarchingShader:send('lightColours', unpack(self.lights.colours))
+            rayMarchingShader:send('lightBrightnesses', unpack(self.lights.brightnesses))
+        end
         rayMarchingShader:send('lightCount', #self.lights.positions)
         rayMarchingShader:send('lightMaxRange', self.lights.maxRange)
 

@@ -1,5 +1,6 @@
 uniform lowp vec2 dimensions;
 uniform lowp float maxDistance;
+uniform highp float globalMinLight;
 uniform mediump float collisionTolerance;
 uniform lowp float samplesPerAxis;
 
@@ -198,14 +199,13 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
             shadowRayPos += shadowRayDirNorm * closestObject.dist;
         }
         highp float inverseDist = 1 - dist / lightMaxRange;
-        outColour +=
-            rayClosestObject.colour * lightColours[i]
+        outColour += rayClosestObject.colour * lightColours[i]
             * inverseDist * inverseDist
             * lightBrightnesses[i]
             * lightAngleVisibility
             * pointVisibility;
     }
-    return outColour;
+    return max(outColour, rayClosestObject.colour * globalMinLight);
 }
 
 
@@ -225,12 +225,10 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
     vec4 colour = vec4(0);
     vec2 coords = dimensions * textureCoords;
-    float rangeExtreme = mod(samplesPerAxis, 2) == 1
-        ? 1 / samplesPerAxis
-        : 0.5 -  1 / (2 * samplesPerAxis);
+    highp float rangeExtreme = 0.5 - 1 / (2 * samplesPerAxis);
 
-    for (float x = -rangeExtreme; x <= rangeExtreme; x += 1 / samplesPerAxis) {
-        for (float y = -rangeExtreme; y <= rangeExtreme; y += 1 / samplesPerAxis) {
+    for (highp float x = -rangeExtreme; x < 0.5; x += 1 / samplesPerAxis) {
+        for (highp float y = -rangeExtreme; y < 0.5; y += 1 / samplesPerAxis) {
             vec2 adjustedOffset = (coords + vec2(x, y)) / dimensions;
             vec2 relativeOffset = (adjustedOffset - vec2(0.5)) * vec2(dimensions.x / dimensions.y, 1);
             vec3 relativeDir = vec3(cameraViewPortDist, -relativeOffset.x, relativeOffset.y);
