@@ -28,10 +28,10 @@ return function(args)
     scene.samplesPerAxis = args.samplesPerAxis or 2
 
     scene.objects = {
-        cube = {},
-        insideCube = {},
-        sphere = {},
-        cylinder = {}
+        cube = {data = {}, material = {}},
+        insideCube = {data = {}, material = {}},
+        sphere = {data = {}, material = {}},
+        cylinder = {data = {}, material = {}}
     }
     scene.lights = {
         positions = {},
@@ -39,7 +39,10 @@ return function(args)
         brightnesses = {},
         maxRange = args.lightMaxRange or 200
     }
-
+    scene.materials = {
+        indexLookup = {},
+        colours = {}
+    }
     scene.camera = {
         x = 0,
         y = 0,
@@ -51,28 +54,37 @@ return function(args)
     }
 
     function scene:addLight(x, y, z, r, g, b, brightness)
-        table.insert(scene.lights.positions, {x, y, z})
-        table.insert(scene.lights.colours, {r or 1, g or 1, b or 1, 1})
-        table.insert(scene.lights.brightnesses, brightness or 1)
+        table.insert(self.lights.positions, {x, y, z})
+        table.insert(self.lights.colours, {r or 1, g or 1, b or 1, 1})
+        table.insert(self.lights.brightnesses, brightness or 1)
     end
 
-    function scene:addCube(x, y, z, width, height, depth)
-        table.insert(self.objects.cube, {x, y, z})
-        table.insert(self.objects.cube, {width, height, depth})
+    function scene:addMaterial(name, r, g, b)
+        self.materials.indexLookup[name] = #self.materials.colours
+        table.insert(self.materials.colours, {r or 1, g or 1, b or 1, 1})
     end
 
-    function scene:addInsideCube(x, y, z, width, height, depth)
-        table.insert(self.objects.insideCube, {x, y, z})
-        table.insert(self.objects.insideCube, {width, height, depth})
+    function scene:addCube(material, x, y, z, width, height, depth)
+        table.insert(self.objects.cube.material, self.materials.indexLookup[material] or -1)
+        table.insert(self.objects.cube.data, {x, y, z})
+        table.insert(self.objects.cube.data, {width, height, depth})
     end
 
-    function scene:addSphere(x, y, z, radius)
-        table.insert(self.objects.sphere, {x, y, z, radius})
+    function scene:addInsideCube(material, x, y, z, width, height, depth)
+        table.insert(self.objects.insideCube.material, self.materials.indexLookup[material] or -1)
+        table.insert(self.objects.insideCube.data, {x, y, z})
+        table.insert(self.objects.insideCube.data, {width, height, depth})
     end
 
-    function scene:addCylinder(x, y, z, radius, height)
-        table.insert(self.objects.cylinder, {x, y, z})
-        table.insert(self.objects.cylinder, {radius, height, 0})
+    function scene:addSphere(material, x, y, z, radius)
+        table.insert(self.objects.sphere.material, self.materials.indexLookup[material] or -1)
+        table.insert(self.objects.sphere.data, {x, y, z, radius})
+    end
+
+    function scene:addCylinder(material, x, y, z, radius, height)
+        table.insert(self.objects.cylinder.material, self.materials.indexLookup[material] or -1)
+        table.insert(self.objects.cylinder.data, {x, y, z})
+        table.insert(self.objects.cylinder.data, {radius, height, 0})
     end
 
     function scene:updateRotationMatrix()
@@ -156,10 +168,15 @@ return function(args)
         rayMarchingShader:send('lightCount', #self.lights.positions)
         rayMarchingShader:send('lightMaxRange', self.lights.maxRange)
 
-        for name, data in pairs(self.objects) do
-            if #data > 0 then
-                rayMarchingShader:send(name .. 'Data', unpack(data))
-                rayMarchingShader:send(name .. 'Count', #data)
+        if #self.materials.colours > 0 then
+            rayMarchingShader:send('materialColours', unpack(self.materials.colours))
+        end
+
+        for name, objectType in pairs(self.objects) do
+            if #objectType.data > 0 then
+                rayMarchingShader:send(name .. 'Data', unpack(objectType.data))
+                rayMarchingShader:send(name .. 'Material', unpack(objectType.material))
+                rayMarchingShader:send(name .. 'Count', #objectType.data)
             end
         end
 

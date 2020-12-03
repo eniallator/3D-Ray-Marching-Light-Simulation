@@ -14,10 +14,15 @@ function love.load()
             lightMaxRange = 200
         }
     )
-    scene:addInsideCube(0, 0, 0, 100, 100, 100)
-    scene:addCube(0, 10, -10, 10, 10, 10)
-    scene:addCylinder(0, 10, 10, 5, 10)
-    scene:addSphere(0, -10, 10, 5)
+    scene:addMaterial("red", 1.0, 0.0, 0.0)
+    scene:addMaterial("green", 0.0, 1.0, 0.0)
+    scene:addMaterial("blue", 0.0, 0.0, 1.0)
+
+    scene:addInsideCube(nil, 0, 0, 0, 100, 100, 100)
+    scene:addCube("red", 0, 10, -10, 10, 10, 10)
+    scene:addCylinder("green", 0, 10, 10, 5, 10)
+    scene:addSphere("blue", 0, -10, 10, 5)
+
     scene:addLight(-20, -20, 0, nil, nil, nil, 1.2)
 end
 

@@ -8,14 +8,18 @@ uniform highp vec3 cameraPos;
 uniform highp mat3 cameraRotationMatrix;
 uniform highp float cameraViewPortDist;
 
-uniform highp vec3 lightPositions[100];
-uniform highp vec4 lightColours[100];
-uniform highp float lightBrightnesses[100];
+uniform highp vec3 lightPositions[20];
+uniform highp vec4 lightColours[20];
+uniform highp float lightBrightnesses[20];
 uniform lowp int lightCount;
 uniform highp float lightMaxRange;
 
+uniform highp vec4 materialColours[25];
+
 struct ObjectData {
     mediump int id;
+    lowp int materialIndex;
+    highp vec3 relativePos;
     highp float dist;
     highp vec4 colour;
     highp vec3 surfaceNormal;
@@ -23,7 +27,16 @@ struct ObjectData {
 };
 
 
-uniform lowp vec3 cubeData[200];
+vec4 getColour(in ObjectData object) {
+    if (object.materialIndex < 0) {
+        return vec4(1.0);
+    }
+    return materialColours[object.materialIndex];
+}
+
+
+uniform lowp vec3 cubeData[40];
+uniform lowp int cubeMaterial[20];
 uniform lowp int cubeCount;
 ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < cubeCount / 2; i ++) {
@@ -50,19 +63,23 @@ ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
             } else {
                 surfaceNormal = vec3(0, 0, diff.z / absDiff.z);
             }
-            closestObject = ObjectData(i, dist, vec4(
-                (cubePos.x + cubeDim.x / 2 - pos.x) / cubeDim.x,
-                (cubePos.y + cubeDim.y / 2 - pos.y) / cubeDim.y,
-                (cubePos.z + cubeDim.z / 2 - pos.z) / cubeDim.z,
-                1.0
-            ), surfaceNormal);
+            closestObject = ObjectData(
+                i,
+                cubeMaterial[i],
+                0.5 + diff / cubeDim,
+                dist,
+                vec4(0.0),
+                surfaceNormal
+            );
+            closestObject.colour = getColour(closestObject);
         }
     }
     return closestObject;
 }
 
 
-uniform lowp vec3 insideCubeData[200];
+uniform lowp vec3 insideCubeData[40];
+uniform lowp int insideCubeMaterial[20];
 uniform lowp int insideCubeCount;
 ObjectData insideCubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < insideCubeCount / 2; i ++) {
@@ -89,14 +106,24 @@ ObjectData insideCubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
             } else {
                 surfaceNormal = vec3(0, 0, diff.z / absDiff.z);
             }
-            closestObject = ObjectData(i + 100, -dist, vec4(1.0), surfaceNormal);
+            closestObject = ObjectData(
+                i + 100,
+                insideCubeMaterial[i],
+                // -1,
+                0.5 + diff / insideCubeDim,
+                -dist,
+                vec4(0.0),
+                surfaceNormal
+            );
+            closestObject.colour = getColour(closestObject);
         }
     }
     return closestObject;
 }
 
 
-uniform lowp vec4 sphereData[100];
+uniform lowp vec4 sphereData[20];
+uniform lowp int sphereMaterial[20];
 uniform lowp int sphereCount;
 highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < sphereCount; i ++) {
@@ -104,19 +131,23 @@ highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) 
         vec3 diff = sphere.xyz - pos;
         highp float dist = length(diff) - sphere.w;
         if (dist < closestObject.dist) {
-            closestObject = ObjectData(i + 200, dist, vec4(
-                (sphere.x + sphere.w / 2 - pos.x) / sphere.w,
-                (sphere.y + sphere.w / 2 - pos.y) / sphere.w,
-                (sphere.z + sphere.w / 2 - pos.z) / sphere.w,
-                1.0
-            ), normalize(pos - sphere.xyz));
+            closestObject = ObjectData(
+                i + 200,
+                sphereMaterial[i],
+                0.5 + diff / vec3(sphere.w, sphere.w, sphere.w),
+                dist,
+                vec4(0.0),
+                normalize(pos - sphere.xyz)
+            );
+            closestObject.colour = getColour(closestObject);
         }
     }
     return closestObject;
 }
 
 
-uniform lowp vec3 cylinderData[200];
+uniform lowp vec3 cylinderData[40];
+uniform lowp int cylinderMaterial[20];
 uniform lowp int cylinderCount;
 highp ObjectData cylinderDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < cylinderCount / 2; i ++) {
@@ -144,19 +175,22 @@ highp ObjectData cylinderDistanceEstimator(in vec3 pos, ObjectData closestObject
             } else {
                 surfaceNormal = normalize(vec3(diff.x, diff.y, 0));
             }
-            closestObject = ObjectData(i + 300, dist, vec4(
-                (cylinderPos.x + radius / 2 - pos.x) / radius,
-                (cylinderPos.y + height / 2 - pos.y) / height,
-                (cylinderPos.z + radius / 2 - pos.z) / radius,
-                1.0
-            ), surfaceNormal);
+            closestObject = ObjectData(
+                i + 300,
+                cylinderMaterial[i],
+                0.5 + diff / vec3(radius, radius, height),
+                dist,
+                vec4(0.0),
+                surfaceNormal
+            );
+            closestObject.colour = getColour(closestObject);
         }
     }
     return closestObject;
 }
 
 highp ObjectData distanceEstimator(in vec3 pos) {
-    ObjectData closestObject = ObjectData(-1, maxDistance, vec4(0), vec3(0));
+    ObjectData closestObject = ObjectData(-1, -1, vec3(0), maxDistance, vec4(0), vec3(0));
     closestObject = cubeDistanceEstimator(pos, closestObject);
     closestObject = insideCubeDistanceEstimator(pos, closestObject);
     closestObject = sphereDistanceEstimator(pos, closestObject);
