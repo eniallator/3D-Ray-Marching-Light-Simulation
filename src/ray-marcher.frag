@@ -3,6 +3,7 @@ uniform lowp float maxDistance;
 uniform highp float globalMinLight;
 uniform mediump float collisionTolerance;
 uniform lowp float samplesPerAxis;
+uniform lowp int maxReflections;
 
 uniform highp vec3 cameraPos;
 uniform highp mat3 cameraRotationMatrix;
@@ -15,6 +16,7 @@ uniform lowp int lightCount;
 uniform highp float lightMaxRange;
 
 uniform highp vec4 materialColours[25];
+uniform highp float materialReflectances[25];
 
 struct ObjectData {
     mediump int id;
@@ -245,15 +247,27 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
 
 mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
     mediump float distanceTravelled = 0.0;
+    lowp int reflections = 0;
+    highp float accumulatedReflectance = 1.0;
+    vec4 accumulatedColour = vec4(0.0, 0.0, 0.0, 1.0);
     while (distanceTravelled < maxDistance) {
         highp ObjectData closestObject = distanceEstimator(pos);
         distanceTravelled += closestObject.dist;
         if (closestObject.dist < collisionTolerance) {
-            return lightPoint(closestObject, pos);
+            accumulatedColour += accumulatedReflectance * lightPoint(closestObject, pos) * (1 - materialReflectances[closestObject.materialIndex]);
+            accumulatedReflectance *= materialReflectances[closestObject.materialIndex];
+            reflections += 1;
+            if (reflections > maxReflections || accumulatedReflectance < 0.1) {
+                break;
+            }
+            distanceTravelled = 0.0;
+            dirNorm -= 2 * dot(dirNorm, -closestObject.surfaceNormal) * -closestObject.surfaceNormal;
+            pos += dirNorm * collisionTolerance;
+            ObjectData obj = distanceEstimator(pos);
         }
         pos += dirNorm * closestObject.dist;
     }
-    return vec4(0, 0, 0, 1.0);
+    return accumulatedColour / (reflections + 1);
 }
 
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {

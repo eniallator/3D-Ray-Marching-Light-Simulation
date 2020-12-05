@@ -26,6 +26,7 @@ return function(args)
     scene.globalMinLight = args.globalMinLight or 0
     scene.collisionTolerance = args.collisionTolerance or 0.1
     scene.samplesPerAxis = args.samplesPerAxis or 2
+    scene.maxReflections = args.maxReflections or 3
 
     scene.objects = {
         cube = {data = {}, material = {}},
@@ -41,7 +42,8 @@ return function(args)
     }
     scene.materials = {
         indexLookup = {},
-        colours = {}
+        colours = {},
+        reflectances = {}
     }
     scene.camera = {
         x = 0,
@@ -59,9 +61,10 @@ return function(args)
         table.insert(self.lights.brightnesses, brightness or 1)
     end
 
-    function scene:addMaterial(name, r, g, b)
+    function scene:addMaterial(name, r, g, b, reflectance)
         self.materials.indexLookup[name] = #self.materials.colours
         table.insert(self.materials.colours, {r or 1, g or 1, b or 1, 1})
+        table.insert(self.materials.reflectances, reflectance or 0)
     end
 
     function scene:addCube(material, x, y, z, width, height, depth)
@@ -155,6 +158,7 @@ return function(args)
         rayMarchingShader:send('globalMinLight', self.globalMinLight)
         rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
         rayMarchingShader:send('samplesPerAxis', self.samplesPerAxis)
+        rayMarchingShader:send('maxReflections', self.maxReflections)
 
         rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
         rayMarchingShader:send('cameraRotationMatrix', self.camera.rotationMatrix)
@@ -170,6 +174,7 @@ return function(args)
 
         if #self.materials.colours > 0 then
             rayMarchingShader:send('materialColours', unpack(self.materials.colours))
+            rayMarchingShader:send('materialReflectances', unpack(self.materials.reflectances))
         end
 
         for name, objectType in pairs(self.objects) do
