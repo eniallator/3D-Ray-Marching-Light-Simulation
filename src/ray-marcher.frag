@@ -222,7 +222,6 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
         highp float lightAngleVisibility = length(normDot)
             / (length(shadowRayDirNorm) * length(rayClosestObject.surfaceNormal));
 
-        highp vec3 pointSurfaceNormal = rayClosestObject.surfaceNormal;
         while (distanceTravelled < dist - collisionTolerance) {
             highp ObjectData closestObject = distanceEstimator(shadowRayPos);
             distanceTravelled += closestObject.dist;
@@ -254,10 +253,11 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
         highp ObjectData closestObject = distanceEstimator(pos);
         distanceTravelled += closestObject.dist;
         if (closestObject.dist < collisionTolerance) {
-            accumulatedColour += accumulatedReflectance * lightPoint(closestObject, pos) * (1 - materialReflectances[closestObject.materialIndex]);
+            accumulatedColour += accumulatedReflectance * lightPoint(closestObject, pos)
+                * (1 - materialReflectances[closestObject.materialIndex]);
             accumulatedReflectance *= materialReflectances[closestObject.materialIndex];
             reflections += 1;
-            if (reflections > maxReflections || accumulatedReflectance < 0.1) {
+            if (reflections > maxReflections || accumulatedReflectance < 0.05) {
                 break;
             }
             distanceTravelled = 0.0;

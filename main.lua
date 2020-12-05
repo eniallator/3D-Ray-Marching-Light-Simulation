@@ -8,7 +8,7 @@ function love.load()
         Scene(
         {
             maxDistance = math.sqrt(100 * 100 * 3),
-            globalMinLight = 0.2,
+            globalMinLight = 0.15,
             collisionTolerance = 0.1,
             samplesPerAxis = 3,
             lightMaxRange = 200,
@@ -17,8 +17,8 @@ function love.load()
     )
     scene:addMaterial("red", 1.0, 0.0, 0.0)
     scene:addMaterial("green", 0.0, 1.0, 0.0)
-    scene:addMaterial("blue", 0.0, 0.0, 1.0)
-    scene:addMaterial("chrome", 0.0, 0.0, 0.0, 1.0)
+    scene:addMaterial("blue", 0.0, 0.0, 1.0, 0.6)
+    scene:addMaterial("chrome", 1.0, 1.0, 1.0, 0.5)
 
     scene:addInsideCube(nil, 0, 0, 0, 100, 100, 100)
     scene:addCube("red", 0, 10, -10, 10, 10, 10)
@@ -65,4 +65,5 @@ end
 function love.draw(dt)
     love.graphics.setShader()
     scene:draw(0, 0, love.graphics.getDimensions())
+    love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
 end
