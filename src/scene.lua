@@ -27,6 +27,8 @@ return function(args)
     scene.collisionTolerance = args.collisionTolerance or 0.1
     scene.samplesPerAxis = args.samplesPerAxis or 2
     scene.maxReflections = args.maxReflections or 3
+    scene.maxRefractionDepth = args.maxRefractionDepth or 3
+    scene.spaceSpeedOfLight = args.spaceSpeedOfLight or 300
 
     scene.objects = {
         cube = {data = {}, material = {}},
@@ -43,7 +45,9 @@ return function(args)
     scene.materials = {
         indexLookup = {},
         colours = {},
-        reflectances = {}
+        reflectances = {},
+        speedsOfLight = {},
+        transparencies = {}
     }
     scene.camera = {
         x = 0,
@@ -61,10 +65,12 @@ return function(args)
         table.insert(self.lights.brightnesses, brightness or 1)
     end
 
-    function scene:addMaterial(name, r, g, b, reflectance)
+    function scene:addMaterial(name, r, g, b, reflectance, transparency, speedOfLight)
         self.materials.indexLookup[name] = #self.materials.colours
         table.insert(self.materials.colours, {r or 1, g or 1, b or 1, 1})
         table.insert(self.materials.reflectances, reflectance or 0)
+        table.insert(self.materials.transparencies, transparency or 0.0)
+        table.insert(self.materials.speedsOfLight, speedOfLight or self.spaceSpeedOfLight)
     end
 
     function scene:addCube(material, x, y, z, width, height, depth)

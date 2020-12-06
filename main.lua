@@ -12,13 +12,15 @@ function love.load()
             collisionTolerance = 0.1,
             samplesPerAxis = 3,
             lightMaxRange = 200,
-            maxReflections = 3
+            maxReflections = 3,
+            maxRefractionDepth = 3,
+            spaceSpeedOfLight = 300
         }
     )
     scene:addMaterial("red", 1.0, 0.0, 0.0)
-    scene:addMaterial("green", 0.0, 1.0, 0.0)
-    scene:addMaterial("blue", 0.0, 0.0, 1.0, 0.6)
-    scene:addMaterial("chrome", 1.0, 1.0, 1.0, 0.5)
+    scene:addMaterial("green", 0.0, 1.0, 0.0, 0.4)
+    scene:addMaterial("blue", 0.0, 0.0, 1.0, 0.4, 1.0)
+    scene:addMaterial("chrome", 1.0, 1.0, 1.0, 1.0)
 
     scene:addInsideCube(nil, 0, 0, 0, 100, 100, 100)
     scene:addCube("red", 0, 10, -10, 10, 10, 10)

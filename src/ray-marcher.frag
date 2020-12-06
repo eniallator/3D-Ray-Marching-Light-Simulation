@@ -1,22 +1,30 @@
+#define numMaterials 25
+#define numLights 20
+#define numObjectsPerType 20
+
 uniform lowp vec2 dimensions;
 uniform lowp float maxDistance;
 uniform highp float globalMinLight;
 uniform mediump float collisionTolerance;
 uniform lowp float samplesPerAxis;
 uniform lowp int maxReflections;
+uniform lowp int maxRefractionDepth;
+uniform highp float spaceSpeedOfLight;
 
 uniform highp vec3 cameraPos;
 uniform highp mat3 cameraRotationMatrix;
 uniform highp float cameraViewPortDist;
 
-uniform highp vec3 lightPositions[20];
-uniform highp vec4 lightColours[20];
-uniform highp float lightBrightnesses[20];
+uniform highp vec3 lightPositions[numLights];
+uniform highp vec4 lightColours[numLights];
+uniform highp float lightBrightnesses[numLights];
 uniform lowp int lightCount;
 uniform highp float lightMaxRange;
 
-uniform highp vec4 materialColours[25];
-uniform highp float materialReflectances[25];
+uniform highp vec4 materialColours[numMaterials];
+uniform highp float materialReflectances[numMaterials];
+uniform highp float materialSpeedsOfLight[numMaterials];
+uniform highp float materialTransparencies[numMaterials];
 
 struct ObjectData {
     mediump int id;
@@ -37,8 +45,8 @@ vec4 getColour(in ObjectData object) {
 }
 
 
-uniform lowp vec3 cubeData[40];
-uniform lowp int cubeMaterial[20];
+uniform lowp vec3 cubeData[2 * numObjectsPerType];
+uniform lowp int cubeMaterial[numObjectsPerType];
 uniform lowp int cubeCount;
 ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < cubeCount / 2; i ++) {
@@ -80,8 +88,8 @@ ObjectData cubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
 }
 
 
-uniform lowp vec3 insideCubeData[40];
-uniform lowp int insideCubeMaterial[20];
+uniform lowp vec3 insideCubeData[2 * numObjectsPerType];
+uniform lowp int insideCubeMaterial[numObjectsPerType];
 uniform lowp int insideCubeCount;
 ObjectData insideCubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < insideCubeCount / 2; i ++) {
@@ -109,7 +117,7 @@ ObjectData insideCubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
                 surfaceNormal = vec3(0, 0, diff.z / absDiff.z);
             }
             closestObject = ObjectData(
-                i + 100,
+                i + numObjectsPerType,
                 insideCubeMaterial[i],
                 // -1,
                 0.5 + diff / insideCubeDim,
@@ -124,8 +132,8 @@ ObjectData insideCubeDistanceEstimator(in vec3 pos, ObjectData closestObject) {
 }
 
 
-uniform lowp vec4 sphereData[20];
-uniform lowp int sphereMaterial[20];
+uniform lowp vec4 sphereData[numObjectsPerType];
+uniform lowp int sphereMaterial[numObjectsPerType];
 uniform lowp int sphereCount;
 highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < sphereCount; i ++) {
@@ -134,7 +142,7 @@ highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) 
         highp float dist = length(diff) - sphere.w;
         if (dist < closestObject.dist) {
             closestObject = ObjectData(
-                i + 200,
+                i + 2 * numObjectsPerType,
                 sphereMaterial[i],
                 0.5 + diff / vec3(sphere.w, sphere.w, sphere.w),
                 dist,
@@ -148,8 +156,8 @@ highp ObjectData sphereDistanceEstimator(in vec3 pos, ObjectData closestObject) 
 }
 
 
-uniform lowp vec3 cylinderData[40];
-uniform lowp int cylinderMaterial[20];
+uniform lowp vec3 cylinderData[2 * numObjectsPerType];
+uniform lowp int cylinderMaterial[numObjectsPerType];
 uniform lowp int cylinderCount;
 highp ObjectData cylinderDistanceEstimator(in vec3 pos, ObjectData closestObject) {
     for (int i = 0; i < cylinderCount / 2; i ++) {
@@ -178,7 +186,7 @@ highp ObjectData cylinderDistanceEstimator(in vec3 pos, ObjectData closestObject
                 surfaceNormal = normalize(vec3(diff.x, diff.y, 0));
             }
             closestObject = ObjectData(
-                i + 300,
+                i + 3 * numObjectsPerType,
                 cylinderMaterial[i],
                 0.5 + diff / vec3(radius, radius, height),
                 dist,
@@ -248,15 +256,20 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
     mediump float distanceTravelled = 0.0;
     lowp int reflections = 0;
     highp float accumulatedReflectance = 1.0;
+    highp float totalInverseReflectance = 1.0;
     vec4 accumulatedColour = vec4(0.0, 0.0, 0.0, 1.0);
     while (distanceTravelled < maxDistance) {
         highp ObjectData closestObject = distanceEstimator(pos);
         distanceTravelled += closestObject.dist;
         if (closestObject.dist < collisionTolerance) {
-            accumulatedColour += accumulatedReflectance * lightPoint(closestObject, pos)
+            highp float inverseReflectance = 1 - materialReflectances[closestObject.materialIndex];
+            highp vec4 colour = accumulatedReflectance * lightPoint(closestObject, pos)
                 * (1 - materialReflectances[closestObject.materialIndex]);
+            accumulatedColour = (accumulatedColour * totalInverseReflectance + colour)
+                / (totalInverseReflectance + inverseReflectance);
             accumulatedReflectance *= materialReflectances[closestObject.materialIndex];
             reflections += 1;
+            totalInverseReflectance += inverseReflectance;
             if (reflections > maxReflections || accumulatedReflectance < 0.05) {
                 break;
             }
@@ -267,7 +280,7 @@ mediump vec4 rayMarch(in vec3 pos, in vec3 dirNorm) {
         }
         pos += dirNorm * closestObject.dist;
     }
-    return accumulatedColour / (reflections + 1);
+    return accumulatedColour;
 }
 
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
