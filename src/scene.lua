@@ -70,28 +70,28 @@ return function(args)
         table.insert(self.materials.colours, {r or 1, g or 1, b or 1, 1})
         table.insert(self.materials.reflectances, reflectance or 0)
         table.insert(self.materials.transparencies, transparency or 0.0)
-        table.insert(self.materials.speedsOfLight, speedOfLight or self.spaceSpeedOfLight)
+        table.insert(self.materials.speedsOfLight, speedOfLight or self.spaceSpeedOfLight - 1)
     end
 
     function scene:addCube(material, x, y, z, width, height, depth)
-        table.insert(self.objects.cube.material, self.materials.indexLookup[material] or -1)
+        table.insert(self.objects.cube.material, self.materials.indexLookup[material])
         table.insert(self.objects.cube.data, {x, y, z})
         table.insert(self.objects.cube.data, {width, height, depth})
     end
 
     function scene:addInsideCube(material, x, y, z, width, height, depth)
-        table.insert(self.objects.insideCube.material, self.materials.indexLookup[material] or -1)
+        table.insert(self.objects.insideCube.material, self.materials.indexLookup[material])
         table.insert(self.objects.insideCube.data, {x, y, z})
         table.insert(self.objects.insideCube.data, {width, height, depth})
     end
 
     function scene:addSphere(material, x, y, z, radius)
-        table.insert(self.objects.sphere.material, self.materials.indexLookup[material] or -1)
+        table.insert(self.objects.sphere.material, self.materials.indexLookup[material])
         table.insert(self.objects.sphere.data, {x, y, z, radius})
     end
 
     function scene:addCylinder(material, x, y, z, radius, height)
-        table.insert(self.objects.cylinder.material, self.materials.indexLookup[material] or -1)
+        table.insert(self.objects.cylinder.material, self.materials.indexLookup[material])
         table.insert(self.objects.cylinder.data, {x, y, z})
         table.insert(self.objects.cylinder.data, {radius, height, 0})
     end
@@ -181,6 +181,8 @@ return function(args)
         if #self.materials.colours > 0 then
             rayMarchingShader:send('materialColours', unpack(self.materials.colours))
             rayMarchingShader:send('materialReflectances', unpack(self.materials.reflectances))
+            rayMarchingShader:send('materialSpeedsOfLight', unpack(self.materials.speedsOfLight))
+            rayMarchingShader:send('materialTransparencies', unpack(self.materials.transparencies))
         end
 
         for name, objectType in pairs(self.objects) do

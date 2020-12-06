@@ -17,15 +17,19 @@ function love.load()
             spaceSpeedOfLight = 300
         }
     )
+    scene:addMaterial("room", 1.0, 1.0, 1.0)
     scene:addMaterial("red", 1.0, 0.0, 0.0)
     scene:addMaterial("green", 0.0, 1.0, 0.0, 0.4)
     scene:addMaterial("blue", 0.0, 0.0, 1.0, 0.4, 1.0)
     scene:addMaterial("chrome", 1.0, 1.0, 1.0, 1.0)
+    scene:addMaterial("water", 0.6, 0.6, 1.0, 0.4, 0.8, 225)
+    scene:addMaterial("glass", 1.0, 1.0, 1.0, 0.5, 0.9, 200)
+    scene:addMaterial("diamond", 1.0, 1.0, 1.0, 0.5, 0.9, 125)
 
-    scene:addInsideCube(nil, 0, 0, 0, 100, 100, 100)
+    scene:addInsideCube("room", 0, 0, 0, 100, 100, 100)
     scene:addCube("red", 0, 10, -10, 10, 10, 10)
     scene:addCylinder("green", 0, 10, 10, 5, 10)
-    scene:addSphere("blue", 0, -10, 10, 5)
+    scene:addSphere("water", 0, -10, 10, 5)
 
     scene:addLight(-20, -20, 0, nil, nil, nil, 1.2)
 end
