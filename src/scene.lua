@@ -165,6 +165,8 @@ return function(args)
         rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
         rayMarchingShader:send('samplesPerAxis', self.samplesPerAxis)
         rayMarchingShader:send('maxReflections', self.maxReflections)
+        rayMarchingShader:send('maxRefractionDepth', self.maxRefractionDepth)
+        rayMarchingShader:send('spaceSpeedOfLight', self.spaceSpeedOfLight)
 
         rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
         rayMarchingShader:send('cameraRotationMatrix', self.camera.rotationMatrix)

@@ -1,7 +1,7 @@
 #define numMaterials 25
 #define numLights 20
 #define numObjectsPerType 20
-#define rayMarchMaxStackSize 10
+#define rayMarchMaxStackSize 6
 
 uniform lowp vec2 dimensions;
 uniform lowp float maxDistance;
@@ -38,6 +38,7 @@ struct ObjectData {
 
 struct Ray {
     highp vec3 pos;
+    highp vec3 dirNorm;
     lowp int inMaterial;
 };
 
@@ -218,20 +219,19 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
         }
 
         mediump float distanceTravelled = 0.0;
-        vec3 shadowRayPos = lightPositions[i].xyz;
-        vec3 shadowRayDirNorm = normalize(-lightPositions[i] + pos);
+        Ray shadowRay = Ray(lightPositions[i].xyz, normalize(-lightPositions[i] + pos), -1);
 
-        highp float normDot = dot(shadowRayDirNorm, rayClosestObject.surfaceNormal);
+        highp float normDot = dot(shadowRay.dirNorm, rayClosestObject.surfaceNormal);
         if (normDot > 0) {
             continue;
         }
 
         highp float pointVisibility = 1.0;
         highp float lightAngleVisibility = length(normDot)
-            / (length(shadowRayDirNorm) * length(rayClosestObject.surfaceNormal));
+            / (length(shadowRay.dirNorm) * length(rayClosestObject.surfaceNormal));
 
         while (distanceTravelled < dist - collisionTolerance) {
-            highp ObjectData closestObject = distanceEstimator(Ray(shadowRayPos, -1));
+            highp ObjectData closestObject = distanceEstimator(shadowRay);
             distanceTravelled += closestObject.dist;
             if (closestObject.dist < collisionTolerance) {
                 if (closestObject.id != rayClosestObject.id) {
@@ -239,7 +239,7 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
                 }
                 break;
             }
-            shadowRayPos += shadowRayDirNorm * closestObject.dist;
+            shadowRay.pos += shadowRay.dirNorm * closestObject.dist;
         }
         highp float inverseDist = 1 - dist / lightMaxRange;
         outColour += rayClosestObject.colour * lightColours[i]
@@ -251,78 +251,91 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
     return max(outColour, rayClosestObject.colour * globalMinLight);
 }
 
-// Use recursion for refraction where there's a maximum "refraction" depth (aka recursion depth)
-
 struct RayMarchAR {
     Ray ray;
-    vec3 dirNorm;
-    float rayStrength;
     int refractionDepth;
+    float rayStrength;
     float distanceTravelled;
-    float accumulatedReflectance;
-    float totalInverseReflectance;
-};
-mediump vec4 rayMarch(in Ray ray, in vec3 dirNorm, in float rayStrength, in int refractionDepth, inout RayMarchAR recursiveStack, inout int stackIndex) {
-    mediump float distanceTravelled = 0.0;
-    lowp int reflections = 0;
-    highp float raySpeed = ray.inMaterial < 0 ? spaceSpeedOfLight : materialSpeedsOfLight[ray.inMaterial];
-    highp float accumulatedReflectance = 1.0;
-    highp float totalInverseReflectance = 1.0;
+    int reflections;
+} stackFrames[rayMarchMaxStackSize];
+mediump vec4 rayMarch(in Ray ray) {
+    // RayMarchAR stackFrames[rayMarchMaxStackSize];
+    stackFrames[0] = RayMarchAR(
+        ray,
+        0,
+        1.0,
+        0.0,
+        0
+    );
+    lowp int stackIndex = 0;
+    lowp int lastStackIndex = 0;
+    RayMarchAR ar = stackFrames[0];
+    highp float raySpeed = ar.ray.inMaterial < 0 ? spaceSpeedOfLight : materialSpeedsOfLight[ar.ray.inMaterial];
     vec4 accumulatedColour = vec4(0.0, 0.0, 0.0, 1.0);
-    while (distanceTravelled < maxDistance) {
-        highp ObjectData closestObject = distanceEstimator(ray);
+    float accumulatedStrength = 1.0;
+    while (stackIndex >= 0) {
+        if (lastStackIndex != stackIndex) {
+            lastStackIndex = stackIndex;
+            stackFrames[lastStackIndex] = ar;
+            ar = stackFrames[stackIndex];
+            raySpeed = ar.ray.inMaterial < 0 ? spaceSpeedOfLight : materialSpeedsOfLight[ar.ray.inMaterial];
+        }
+        if (ar.distanceTravelled >= maxDistance || ar.rayStrength < 0.05) {
+            stackIndex -= 1;
+            continue;
+        }
+        highp ObjectData closestObject = distanceEstimator(ar.ray);
         highp float objSpeedOfLight = materialSpeedsOfLight[closestObject.materialIndex];
         if (raySpeed == objSpeedOfLight && objSpeedOfLight != spaceSpeedOfLight) {
             closestObject.dist *= -1;
         }
-        distanceTravelled += closestObject.dist;
+        ar.distanceTravelled += closestObject.dist;
         if (closestObject.dist < collisionTolerance) {
-            highp float inverseReflectance = 1 - materialReflectances[closestObject.materialIndex];
-            highp vec4 colour = rayStrength * accumulatedReflectance * lightPoint(closestObject, ray.pos)
-                * (1 - materialReflectances[closestObject.materialIndex]);
-            accumulatedColour = (accumulatedColour * totalInverseReflectance + colour)
-                / (totalInverseReflectance + inverseReflectance);
-            accumulatedReflectance *= materialReflectances[closestObject.materialIndex];
-            reflections += 1;
-            totalInverseReflectance += inverseReflectance;
-            if (reflections > maxReflections || rayStrength * accumulatedReflectance < 0.05) {
-                break;
+            float strength = ar.rayStrength * (1 - materialReflectances[closestObject.materialIndex]);
+            accumulatedStrength += strength;
+            accumulatedColour += strength * lightPoint(closestObject, ar.ray.pos);
+            ar.reflections += 1;
+            if (ar.reflections > maxReflections || ar.rayStrength < 0.05) {
+                stackIndex -= 1;
+                continue;
             }
-            vec3 boundaryNormal = dot(closestObject.surfaceNormal, dirNorm) >= 0
-                ? closestObject.surfaceNormal.xyz
-                : -closestObject.surfaceNormal.xyz;
-            float nextRaySpeed = closestObject.dist < 0 ? materialSpeedsOfLight[closestObject.materialIndex] : raySpeed;
-            float n = raySpeed / nextRaySpeed;
-            float cosI = dot(boundaryNormal, dirNorm);
-            float sinT2 = n * n * (1.0 - cosI * cosI);
-            if (sinT2 <= 1.0 && refractionDepth < maxRefractionDepth && stackIndex < rayMarchMaxStackSize - 1) {
-                rayStrength *= 1 - materialTransparencies[closestObject.materialIndex];
-                float cosT = sqrt(1.0 - sinT2);
-                vec3 refractedDir = n * dirNorm + (n * cosI - cosT) * boundaryNormal;
-                accumulatedColour = rayMarch(
+            vec3 boundaryNormal = dot(closestObject.surfaceNormal, ar.ray.dirNorm) >= 0
+                ? closestObject.surfaceNormal
+                : -closestObject.surfaceNormal;
+            float n = raySpeed / objSpeedOfLight;
+
+            float cosI = abs(dot(boundaryNormal, ar.ray.dirNorm));
+            float cosRSqr = 1 - (n * n * (1 - cosI * cosI));
+            if (
+                cosRSqr >= 0
+                && materialTransparencies[closestObject.materialIndex] > 0.0
+                && ar.refractionDepth < maxRefractionDepth
+                && stackIndex < rayMarchMaxStackSize - 1
+            ) {
+                float cosR = sqrt(cosRSqr);
+                vec3 refractedDir = n * ar.ray.dirNorm + (n * cosI - cosR) * boundaryNormal;
+                stackIndex += 1;
+                stackFrames[stackIndex] = RayMarchAR(
                     Ray(
-                        ray.pos.xyz + refractedDir * collisionTolerance,
+                        ar.ray.pos + refractedDir * collisionTolerance,
+                        refractedDir,
                         closestObject.materialIndex
                     ),
-                    refractedDir,
-                    rayStrength * materialTransparencies[closestObject.materialIndex],
-                    refractionDepth + 1
+                    ar.refractionDepth + 1,
+                    ar.rayStrength * materialTransparencies[closestObject.materialIndex],
+                    0.0,
+                    0
                 );
+                ar.rayStrength *= 1 - materialTransparencies[closestObject.materialIndex];
             }
-            distanceTravelled = 0.0;
-            dirNorm -= 2 * dot(dirNorm, -closestObject.surfaceNormal) * -closestObject.surfaceNormal;
-            ray.pos += dirNorm * collisionTolerance;
+            ar.rayStrength *= materialReflectances[closestObject.materialIndex];
+            ar.distanceTravelled = 0.0;
+            ar.ray.dirNorm -= 2 * dot(ar.ray.dirNorm, -closestObject.surfaceNormal) * -closestObject.surfaceNormal;
+            ar.ray.pos += ar.ray.dirNorm * collisionTolerance;
         }
-        ray.pos += dirNorm * closestObject.dist;
+        ar.ray.pos += ar.ray.dirNorm * closestObject.dist;
     }
-    return accumulatedColour;
-}
-
-mediump vec4 rayMarch(in Ray ray, in vec3 dirNorm) {
-    vec4 accumulatedColour = vec4(0.0, 0.0, 0.0, 1.0);
-    RayMarchAR rayMarchRecursionStack[rayMarchMaxStackSize];
-    int recursiveIndex = 0;
-    return rayMarch(ray, dirNorm, 1.0, 0);
+    return accumulatedColour / accumulatedStrength;
 }
 
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
@@ -331,7 +344,7 @@ vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in ve
     highp float rangeExtreme = 0.5 - 1 / (2 * samplesPerAxis);
 
     int materialIndex = -1;
-    ObjectData closestObject = distanceEstimator(Ray(cameraPos, materialIndex));
+    ObjectData closestObject = distanceEstimator(Ray(cameraPos, vec3(0), materialIndex));
     if (closestObject.dist < 0) {
         materialIndex = closestObject.materialIndex;
     }
@@ -343,7 +356,7 @@ vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in ve
             vec3 relativeDir = vec3(cameraViewPortDist, -relativeOffset.x, relativeOffset.y);
             vec3 dirNorm = normalize(cameraRotationMatrix * relativeDir);
 
-            colour += rayMarch(Ray(cameraPos, materialIndex), dirNorm);
+            colour += rayMarch(Ray(cameraPos, dirNorm, materialIndex));
         }
     }
     return colour / (samplesPerAxis * samplesPerAxis);
