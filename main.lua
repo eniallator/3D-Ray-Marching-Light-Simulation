@@ -9,27 +9,28 @@ function love.load()
         {
             maxDistance = math.sqrt(100 * 100 * 3),
             globalMinLight = 0.15,
-            collisionTolerance = 0.1,
+            collisionTolerance = 0.01,
             samplesPerAxis = 3,
             lightMaxRange = 200,
             maxReflections = 3,
-            maxRefractionDepth = 3,
+            maxRefractionDepth = 4,
             spaceSpeedOfLight = 300
         }
     )
     scene:addMaterial("room", 1.0, 1.0, 1.0)
     scene:addMaterial("red", 1.0, 0.0, 0.0)
     scene:addMaterial("green", 0.0, 1.0, 0.0, 0.4)
-    scene:addMaterial("blue", 0.0, 0.0, 1.0, 0.4, 1.0)
+    scene:addMaterial("blue", 0.0, 0.0, 1.0, 0.4)
     scene:addMaterial("chrome", 1.0, 1.0, 1.0, 1.0)
     scene:addMaterial("water", 0.6, 0.6, 1.0, 0.4, 0.8, 225)
     scene:addMaterial("glass", 1.0, 1.0, 1.0, 0.5, 0.9, 200)
     scene:addMaterial("diamond", 1.0, 1.0, 1.0, 0.5, 0.9, 125)
+    scene:addMaterial("hidden", 1.0, 1.0, 1.0, 1.0, 1.0, 225)
 
     scene:addInsideCube("room", 0, 0, 0, 100, 100, 100)
     scene:addCube("red", 0, 10, -10, 10, 10, 10)
     scene:addCylinder("green", 0, 10, 10, 5, 10)
-    scene:addSphere("water", 0, -10, 10, 5)
+    scene:addSphere("hidden", 0, -10, 10, 5)
 
     scene:addLight(-20, -20, 0, nil, nil, nil, 1.2)
 end

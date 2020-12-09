@@ -259,7 +259,6 @@ struct RayMarchAR {
     int reflections;
 } stackFrames[rayMarchMaxStackSize];
 mediump vec4 rayMarch(in Ray ray) {
-    // RayMarchAR stackFrames[rayMarchMaxStackSize];
     stackFrames[0] = RayMarchAR(
         ray,
         0,
@@ -275,10 +274,10 @@ mediump vec4 rayMarch(in Ray ray) {
     float accumulatedStrength = 1.0;
     while (stackIndex >= 0) {
         if (lastStackIndex != stackIndex) {
-            lastStackIndex = stackIndex;
             stackFrames[lastStackIndex] = ar;
             ar = stackFrames[stackIndex];
             raySpeed = ar.ray.inMaterial < 0 ? spaceSpeedOfLight : materialSpeedsOfLight[ar.ray.inMaterial];
+            lastStackIndex = stackIndex;
         }
         if (ar.distanceTravelled >= maxDistance || ar.rayStrength < 0.05) {
             stackIndex -= 1;
@@ -291,7 +290,9 @@ mediump vec4 rayMarch(in Ray ray) {
         }
         ar.distanceTravelled += closestObject.dist;
         if (closestObject.dist < collisionTolerance) {
-            float strength = ar.rayStrength * (1 - materialReflectances[closestObject.materialIndex]);
+            float strength = ar.rayStrength
+                * (1 - materialReflectances[closestObject.materialIndex])
+                * (1 - materialTransparencies[closestObject.materialIndex]);
             accumulatedStrength += strength;
             accumulatedColour += strength * lightPoint(closestObject, ar.ray.pos);
             ar.reflections += 1;
@@ -299,12 +300,13 @@ mediump vec4 rayMarch(in Ray ray) {
                 stackIndex -= 1;
                 continue;
             }
-            vec3 boundaryNormal = dot(closestObject.surfaceNormal, ar.ray.dirNorm) >= 0
-                ? closestObject.surfaceNormal
-                : -closestObject.surfaceNormal;
-            float n = raySpeed / objSpeedOfLight;
+            vec3 boundaryNormal = dot(closestObject.surfaceNormal, ar.ray.dirNorm) < 0
+                ? -closestObject.surfaceNormal
+                : closestObject.surfaceNormal;
 
-            float cosI = abs(dot(boundaryNormal, ar.ray.dirNorm));
+            float n = objSpeedOfLight / raySpeed;
+
+            float cosI = dot(boundaryNormal, ar.ray.dirNorm);
             float cosRSqr = 1 - (n * n * (1 - cosI * cosI));
             if (
                 cosRSqr >= 0
@@ -312,12 +314,11 @@ mediump vec4 rayMarch(in Ray ray) {
                 && ar.refractionDepth < maxRefractionDepth
                 && stackIndex < rayMarchMaxStackSize - 1
             ) {
-                float cosR = sqrt(cosRSqr);
-                vec3 refractedDir = n * ar.ray.dirNorm + (n * cosI - cosR) * boundaryNormal;
+                vec3 refractedDir = normalize(sqrt(cosRSqr) * boundaryNormal + n * (ar.ray.dirNorm - cosI * boundaryNormal));
                 stackIndex += 1;
                 stackFrames[stackIndex] = RayMarchAR(
                     Ray(
-                        ar.ray.pos + refractedDir * collisionTolerance,
+                        ar.ray.pos + refractedDir * 9,
                         refractedDir,
                         closestObject.materialIndex
                     ),
