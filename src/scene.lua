@@ -27,8 +27,9 @@ return function(args)
     scene.collisionTolerance = args.collisionTolerance or 0.1
     scene.samplesPerAxis = args.samplesPerAxis or 2
     scene.maxReflections = args.maxReflections or 3
-    scene.maxRefractionDepth = args.maxRefractionDepth or 3
+    scene.maxRefractionDepth = args.maxRefractionDepth or 4
     scene.spaceSpeedOfLight = args.spaceSpeedOfLight or 300
+    scene.softShadowAngle = args.softShadowAngle or 0.0
 
     scene.objects = {
         cube = {data = {}, material = {}},
@@ -167,6 +168,7 @@ return function(args)
         rayMarchingShader:send('maxReflections', self.maxReflections)
         rayMarchingShader:send('maxRefractionDepth', self.maxRefractionDepth)
         rayMarchingShader:send('spaceSpeedOfLight', self.spaceSpeedOfLight)
+        rayMarchingShader:send('softShadowAngle', self.softShadowAngle)
 
         rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
         rayMarchingShader:send('cameraRotationMatrix', self.camera.rotationMatrix)

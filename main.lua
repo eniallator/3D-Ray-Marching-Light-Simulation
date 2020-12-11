@@ -13,8 +13,9 @@ function love.load()
             samplesPerAxis = 3,
             lightMaxRange = 200,
             maxReflections = 3,
-            maxRefractionDepth = 4,
-            spaceSpeedOfLight = 300
+            maxRefractionDepth = 3,
+            spaceSpeedOfLight = 300,
+            softShadowAngle = 0.02
         }
     )
     scene:addMaterial("room", 1.0, 1.0, 1.0)

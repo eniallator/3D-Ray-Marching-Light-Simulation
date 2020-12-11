@@ -2,6 +2,7 @@
 #define numLights 20
 #define numObjectsPerType 20
 #define rayMarchMaxStackSize 6
+#define rayCollisionOffset collisionTolerance * 3
 
 uniform lowp vec2 dimensions;
 uniform lowp float maxDistance;
@@ -11,6 +12,7 @@ uniform lowp float samplesPerAxis;
 uniform lowp int maxReflections;
 uniform lowp int maxRefractionDepth;
 uniform highp float spaceSpeedOfLight;
+uniform highp float softShadowAngle;
 
 uniform highp vec3 cameraPos;
 uniform highp mat3 cameraRotationMatrix;
@@ -230,8 +232,17 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
         highp float lightAngleVisibility = length(normDot)
             / (length(shadowRay.dirNorm) * length(rayClosestObject.surfaceNormal));
 
-        while (distanceTravelled < dist - collisionTolerance) {
+        highp ObjectData closestPathObject = ObjectData(-1, -1, vec3(0), maxDistance, vec4(0), vec3(0));
+        highp vec3 closestPathPos = shadowRay.pos;
+
+        while (distanceTravelled < dist - collisionTolerance && pointVisibility > 0.05) {
             highp ObjectData closestObject = distanceEstimator(shadowRay);
+            highp float theta = asin(closestPathObject.dist / length(shadowRay.pos - closestPathPos));
+            pointVisibility = min(theta / softShadowAngle, pointVisibility);
+            if (abs(closestObject.dist) < abs(closestPathObject.dist)) {
+                closestPathObject = closestObject;
+                closestPathPos = shadowRay.pos;
+            }
             distanceTravelled += closestObject.dist;
             if (closestObject.dist < collisionTolerance) {
                 if (closestObject.id != rayClosestObject.id) {
@@ -316,7 +327,7 @@ mediump vec4 rayMarch(in Ray ray) {
                 stackIndex += 1;
                 stackFrames[stackIndex] = RayMarchAR(
                     Ray(
-                        ar.ray.pos + refractedDir * 3 * collisionTolerance,
+                        ar.ray.pos + refractedDir * rayCollisionOffset,
                         refractedDir,
                         closestObject.materialIndex
                     ),
