@@ -13,6 +13,9 @@ uniform lowp int maxReflections;
 uniform lowp int maxRefractionDepth;
 uniform highp float spaceSpeedOfLight;
 uniform highp float softShadowAngle;
+uniform lowp int ambientOcclusionSamples;
+uniform highp float ambientOcclusionMaxHeight;
+uniform highp float ambientOcclusionStrength;
 
 uniform highp vec3 cameraPos;
 uniform highp mat3 cameraRotationMatrix;
@@ -215,16 +218,28 @@ highp ObjectData distanceEstimator(in Ray ray) {
 }
 
 
-highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
+highp vec4 lightPoint(in ObjectData rayClosestObject, in Ray ray) {
     highp vec4 outColour = vec4(0);
     for (int i = 0; i < lightCount; i++) {
-        highp float dist = length(lightPositions[i] - pos);
+        highp float dist = length(lightPositions[i] - ray.pos);
         if (dist > lightMaxRange) {
             continue;
         }
 
         mediump float distanceTravelled = 0.0;
-        Ray shadowRay = Ray(lightPositions[i].xyz, normalize(-lightPositions[i] + pos), -1);
+        Ray shadowRay = Ray(lightPositions[i].xyz, normalize(-lightPositions[i] + ray.pos), -1);
+
+        float ambientOcclusionModifier = 1.0;
+        for (int i = 1; i <= ambientOcclusionSamples; i ++) {
+            float height = i * ambientOcclusionMaxHeight / ambientOcclusionSamples;
+            ObjectData closestObject = distanceEstimator(Ray(
+                height * rayClosestObject.surfaceNormal + ray.pos,
+                rayClosestObject.surfaceNormal,
+                ray.inMaterial
+            ));
+            ambientOcclusionModifier -= (1 - pow(closestObject.dist / height, 2)) / ambientOcclusionSamples;
+        }
+        ambientOcclusionModifier = 1 - (1 - ambientOcclusionModifier) * ambientOcclusionStrength;
 
         highp float normDot = dot(shadowRay.dirNorm, rayClosestObject.surfaceNormal);
         if (normDot > 0) {
@@ -260,7 +275,8 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in vec3 pos) {
             * inverseDist * inverseDist
             * lightBrightnesses[i]
             * lightAngleVisibility
-            * pointVisibility;
+            * pointVisibility
+            * ambientOcclusionModifier;
     }
     return max(outColour, rayClosestObject.colour * globalMinLight);
 }
@@ -306,7 +322,7 @@ mediump vec4 rayMarch(in Ray ray) {
                 * (1 - materialReflectances[closestObject.materialIndex])
                 * (1 - materialTransparencies[closestObject.materialIndex]);
             accumulatedStrength += strength;
-            accumulatedColour += strength * lightPoint(closestObject, ar.ray.pos);
+            accumulatedColour += strength * lightPoint(closestObject, ar.ray);
             ar.reflections += 1;
             if (ar.reflections > maxReflections || ar.rayStrength < 0.05) {
                 stackIndex -= 1;

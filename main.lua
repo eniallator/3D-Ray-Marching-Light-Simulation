@@ -15,12 +15,15 @@ function love.load()
             maxReflections = 3,
             maxRefractionDepth = 3,
             spaceSpeedOfLight = 300,
-            softShadowAngle = 0.02
+            softShadowAngle = 0.02,
+            ambientOcclusionSamples = 10,
+            ambientOcclusionMaxHeight = 3,
+            ambientOcclusionStrength = 0.2
         }
     )
     scene:addMaterial("room", {1.0, 1.0, 1.0})
     scene:addMaterial("red", {1.0, 0.0, 0.0})
-    scene:addMaterial("green", {0.0, 1.0, 0.0}, 0.4, nil, nil, 0.6, 5, {1, 1, 0})
+    scene:addMaterial("green", {0.0, 1.0, 0.0}, 0.4, nil, nil, 0.6, 5, {1, 1, 0.3})
     scene:addMaterial("blue", {0.0, 0.0, 1.0}, 0.4)
     scene:addMaterial("chrome", {1.0, 1.0, 1.0}, 1.0)
     scene:addMaterial("water", {0.6, 0.6, 1.0}, 0.4, 0.7, 225)
@@ -31,7 +34,7 @@ function love.load()
     scene:addInsideCube("room", 0, 0, 0, 100, 100, 100)
     scene:addCube("red", 0, 10, -10, 10, 10, 10)
     scene:addCylinder("green", 0, 10, 10, 5, 10)
-    scene:addSphere("hidden", 0, -10, 10, 5)
+    scene:addSphere("hidden", 0, -10, 0, 5)
 
     scene:addLight(-20, -20, 0, nil, nil, nil, 1.2)
 end
