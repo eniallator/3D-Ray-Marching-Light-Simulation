@@ -349,6 +349,7 @@ mediump vec4 rayMarch(in Ray ray) {
             highp float glowStrength = materialGlowStrengths[closestObject.materialIndex] * (
                 1 - (closestObject.dist / materialGlowRanges[closestObject.materialIndex])
             );
+            glowStrength *= glowStrength;
             accumulatedColour += glowStrength * materialGlowColours[closestObject.materialIndex];
             accumulatedStrength += glowStrength;
         }
