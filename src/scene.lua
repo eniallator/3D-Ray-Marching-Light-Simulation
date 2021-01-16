@@ -48,7 +48,10 @@ return function(args)
         colours = {},
         reflectances = {},
         speedsOfLight = {},
-        transparencies = {}
+        transparencies = {},
+        glowStrengths = {},
+        glowRanges = {},
+        glowColours = {}
     }
     scene.camera = {
         x = 0,
@@ -66,12 +69,26 @@ return function(args)
         table.insert(self.lights.brightnesses, brightness or 1)
     end
 
-    function scene:addMaterial(name, r, g, b, reflectance, transparency, speedOfLight)
+    function scene:addMaterial(
+        name,
+        colour,
+        reflectance,
+        transparency,
+        speedOfLight,
+        glowStrength,
+        glowRange,
+        glowColour)
         self.materials.indexLookup[name] = #self.materials.colours
-        table.insert(self.materials.colours, {r or 1, g or 1, b or 1, 1})
+        table.insert(self.materials.colours, {colour[1] or 1, colour[2] or 1, colour[3] or 1, 1})
         table.insert(self.materials.reflectances, reflectance or 0)
         table.insert(self.materials.transparencies, transparency or 0.0)
         table.insert(self.materials.speedsOfLight, speedOfLight or self.spaceSpeedOfLight - 1)
+        table.insert(self.materials.glowStrengths, glowStrength or 0)
+        table.insert(self.materials.glowRanges, glowRange or 0)
+        table.insert(
+            self.materials.glowColours,
+            glowColour and {glowColour[1] or 1, glowColour[2] or 1, glowColour[3] or 1, 1} or {1, 1, 1, 1}
+        )
     end
 
     function scene:addCube(material, x, y, z, width, height, depth)
@@ -187,6 +204,9 @@ return function(args)
             rayMarchingShader:send('materialReflectances', unpack(self.materials.reflectances))
             rayMarchingShader:send('materialSpeedsOfLight', unpack(self.materials.speedsOfLight))
             rayMarchingShader:send('materialTransparencies', unpack(self.materials.transparencies))
+            rayMarchingShader:send('materialGlowStrengths', unpack(self.materials.glowStrengths))
+            rayMarchingShader:send('materialGlowRanges', unpack(self.materials.glowRanges))
+            rayMarchingShader:send('materialGlowColours', unpack(self.materials.glowColours))
         end
 
         for name, objectType in pairs(self.objects) do

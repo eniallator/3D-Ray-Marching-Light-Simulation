@@ -2,7 +2,7 @@
 #define numLights 20
 #define numObjectsPerType 20
 #define rayMarchMaxStackSize 6
-#define rayCollisionOffset collisionTolerance * 3
+#define rayCollisionOffset collisionTolerance * 8
 
 uniform lowp vec2 dimensions;
 uniform lowp float maxDistance;
@@ -28,6 +28,9 @@ uniform highp vec4 materialColours[numMaterials];
 uniform highp float materialReflectances[numMaterials];
 uniform highp float materialSpeedsOfLight[numMaterials];
 uniform highp float materialTransparencies[numMaterials];
+uniform highp float materialGlowStrengths[numMaterials];
+uniform highp float materialGlowRanges[numMaterials];
+uniform highp vec4 materialGlowColours[numMaterials];
 
 struct ObjectData {
     mediump int id;
@@ -342,6 +345,12 @@ mediump vec4 rayMarch(in Ray ray) {
             ar.distanceTravelled = 0.0;
             ar.ray.dirNorm -= 2 * dot(ar.ray.dirNorm, -closestObject.surfaceNormal) * -closestObject.surfaceNormal;
             ar.ray.pos += ar.ray.dirNorm * collisionTolerance;
+        } else if (closestObject.dist <= materialGlowRanges[closestObject.materialIndex]) {
+            highp float glowStrength = materialGlowStrengths[closestObject.materialIndex] * (
+                1 - (closestObject.dist / materialGlowRanges[closestObject.materialIndex])
+            );
+            accumulatedColour += glowStrength * materialGlowColours[closestObject.materialIndex];
+            accumulatedStrength += glowStrength;
         }
         ar.ray.pos += ar.ray.dirNorm * closestObject.dist;
     }
