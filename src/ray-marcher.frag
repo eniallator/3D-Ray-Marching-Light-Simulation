@@ -38,7 +38,6 @@ uniform highp vec4 materialGlowColours[numMaterials];
 struct ObjectData {
     mediump int id;
     lowp int materialIndex;
-    highp vec3 relativePos;
     highp float dist;
     highp vec4 colour;
     highp vec3 surfaceNormal;
@@ -51,31 +50,42 @@ struct Ray {
 };
 
 
-vec4 getColour(in ObjectData object) {
+highp vec4 getColour(in ObjectData object) {
     if (object.materialIndex < 0) {
         return vec4(1.0);
     }
     return materialColours[object.materialIndex];
 }
 
+highp vec3 applyTransformation(in vec3 position, in vec3 scale, in mat3 rotation) {
+    return (position * transpose(rotation)) / scale;
+}
 
-uniform lowp vec3 cubeData[2 * numObjectsPerType];
-uniform lowp int cubeMaterial[numObjectsPerType];
+highp vec3 undoRotation(in vec3 normal, in mat3 rotation) {
+    return normal * rotation;
+}
+
+
 uniform lowp int cubeCount;
+uniform lowp int cubeMaterial[numObjectsPerType];
+uniform lowp vec3 cubePosition[numObjectsPerType];
+uniform lowp vec3 cubeScale[numObjectsPerType];
+uniform lowp mat3 cubeRotation[numObjectsPerType];
+uniform lowp vec3 cubeData[numObjectsPerType];
 ObjectData cubeDistanceEstimator(in Ray ray, ObjectData closestObject) {
-    for (int i = 0; i < cubeCount / 2; i ++) {
-        vec3 cubePos = cubeData[i * 2];
-        vec3 cubeDim = cubeData[i * 2 + 1];
-        mediump vec3 diff = max(cubePos - cubeDim / 2 - ray.pos, max(vec3(0), ray.pos - cubePos - cubeDim / 2));
+    for (int i = 0; i < cubeCount; i ++) {
+        vec3 relativePos = applyTransformation(cubePosition[i] - ray.pos, cubeScale[i], cubeRotation[i]);
+        vec3 cubeDim = cubeData[i];
+        mediump vec3 diff = max(relativePos - cubeDim / 2, max(vec3(0), -relativePos - cubeDim / 2));
         highp float dist;
         if (diff == vec3(0)) {
-            vec3 distVec = abs(ray.pos - cubePos) - cubeDim / 2;
+            vec3 distVec = abs(relativePos) - cubeDim / 2;
             dist = max(distVec.x, max(distVec.y, distVec.z));
         } else {
             dist = length(diff);
         }
         if (dist < closestObject.dist) {
-            vec3 diff = ray.pos - cubePos;
+            vec3 diff = -relativePos;
             vec3 absDiff = abs(diff);
             vec3 surfaceNormal;
             if (absDiff.x > absDiff.y && absDiff.x > absDiff.z) {
@@ -88,10 +98,9 @@ ObjectData cubeDistanceEstimator(in Ray ray, ObjectData closestObject) {
             closestObject = ObjectData(
                 i,
                 cubeMaterial[i],
-                0.5 + diff / cubeDim,
                 dist,
                 vec4(0.0),
-                surfaceNormal
+                undoRotation(surfaceNormal, cubeRotation[i])
             );
             closestObject.colour = getColour(closestObject);
         }
@@ -100,23 +109,26 @@ ObjectData cubeDistanceEstimator(in Ray ray, ObjectData closestObject) {
 }
 
 
-uniform lowp vec3 insideCubeData[2 * numObjectsPerType];
-uniform lowp int insideCubeMaterial[numObjectsPerType];
 uniform lowp int insideCubeCount;
+uniform lowp int insideCubeMaterial[numObjectsPerType];
+uniform lowp vec3 insideCubePosition[numObjectsPerType];
+uniform lowp vec3 insideCubeScale[numObjectsPerType];
+uniform lowp mat3 insideCubeRotation[numObjectsPerType];
+uniform lowp vec3 insideCubeData[numObjectsPerType];
 ObjectData insideCubeDistanceEstimator(in Ray ray, ObjectData closestObject) {
-    for (int i = 0; i < insideCubeCount / 2; i ++) {
-        vec3 insideCubePos = insideCubeData[i * 2];
-        vec3 insideCubeDim = insideCubeData[i * 2 + 1];
-        mediump vec3 diff = max(insideCubePos - insideCubeDim / 2 - ray.pos, max(vec3(0), ray.pos - insideCubePos - insideCubeDim / 2));
+    for (int i = 0; i < insideCubeCount; i ++) {
+        vec3 relativePos = applyTransformation(insideCubePosition[i] - ray.pos, insideCubeScale[i], insideCubeRotation[i]);
+        vec3 insideCubeDim = insideCubeData[i];
+        mediump vec3 diff = max(relativePos - insideCubeDim / 2, max(vec3(0), -relativePos - insideCubeDim / 2));
         highp float dist;
         if (diff == vec3(0)) {
-            vec3 distVec = abs(ray.pos - insideCubePos) - insideCubeDim / 2;
+            vec3 distVec = abs(relativePos) - insideCubeDim / 2;
             dist = max(distVec.x, max(distVec.y, distVec.z));
         } else {
             dist = length(diff);
         }
         if (-dist < closestObject.dist) {
-            vec3 diff = insideCubePos - ray.pos;
+            vec3 diff = relativePos;
             vec3 absDiff = abs(diff);
             vec3 surfaceNormal;
             if (absDiff.x > absDiff.y && absDiff.x > absDiff.z) {
@@ -129,10 +141,9 @@ ObjectData insideCubeDistanceEstimator(in Ray ray, ObjectData closestObject) {
             closestObject = ObjectData(
                 i + numObjectsPerType,
                 insideCubeMaterial[i],
-                0.5 + diff / insideCubeDim,
                 -dist,
                 vec4(0.0),
-                surfaceNormal
+                undoRotation(surfaceNormal, insideCubeRotation[i])
             );
             closestObject.colour = getColour(closestObject);
         }
@@ -141,22 +152,24 @@ ObjectData insideCubeDistanceEstimator(in Ray ray, ObjectData closestObject) {
 }
 
 
-uniform lowp vec4 sphereData[numObjectsPerType];
-uniform lowp int sphereMaterial[numObjectsPerType];
 uniform lowp int sphereCount;
+uniform lowp int sphereMaterial[numObjectsPerType];
+uniform lowp vec3 spherePosition[numObjectsPerType];
+uniform lowp vec3 sphereScale[numObjectsPerType];
+uniform lowp mat3 sphereRotation[numObjectsPerType];
+uniform lowp float sphereData[numObjectsPerType];
 highp ObjectData sphereDistanceEstimator(in Ray ray, ObjectData closestObject) {
     for (int i = 0; i < sphereCount; i ++) {
-        vec4 sphere = sphereData[i];
-        vec3 diff = sphere.xyz - ray.pos;
-        highp float dist = length(diff) - sphere.w;
+        highp vec3 relativePos = applyTransformation(spherePosition[i] - ray.pos, sphereScale[i], sphereRotation[i]);
+        float radius = sphereData[i];
+        highp float dist = length(relativePos) - radius;
         if (dist < closestObject.dist) {
             closestObject = ObjectData(
                 i + 2 * numObjectsPerType,
                 sphereMaterial[i],
-                0.5 + diff / vec3(sphere.w, sphere.w, sphere.w),
                 dist,
                 vec4(0.0),
-                normalize(ray.pos - sphere.xyz)
+                undoRotation(-normalize(relativePos), sphereRotation[i])
             );
             closestObject.colour = getColour(closestObject);
         }
@@ -165,41 +178,43 @@ highp ObjectData sphereDistanceEstimator(in Ray ray, ObjectData closestObject) {
 }
 
 
-uniform lowp vec3 cylinderData[2 * numObjectsPerType];
-uniform lowp int cylinderMaterial[numObjectsPerType];
 uniform lowp int cylinderCount;
+uniform lowp int cylinderMaterial[numObjectsPerType];
+uniform lowp vec3 cylinderPosition[numObjectsPerType];
+uniform lowp vec3 cylinderScale[numObjectsPerType];
+uniform lowp mat3 cylinderRotation[numObjectsPerType];
+uniform lowp vec2 cylinderData[numObjectsPerType];
 highp ObjectData cylinderDistanceEstimator(in Ray ray, ObjectData closestObject) {
-    for (int i = 0; i < cylinderCount / 2; i ++) {
-        vec3 cylinderPos = cylinderData[i * 2];
-        float radius = cylinderData[i * 2 + 1].x;
-        float height = cylinderData[i * 2 + 1].y;
+    for (int i = 0; i < cylinderCount; i ++) {
+        vec3 cylinderPos = cylinderPosition[i];
+        vec3 relativePos = applyTransformation(cylinderPosition[i] - ray.pos, cylinderScale[i], cylinderRotation[i]);
+        float radius = cylinderData[i].x;
+        float height = cylinderData[i].y;
 
-        vec3 diff = ray.pos - cylinderPos;
-        vec2 posDiff = vec2(
-            max(length(diff.xy) - radius, 0),
-            max(abs(diff.z) - height / 2, 0)
+        vec2 clampedRelativePos = vec2(
+            max(length(relativePos.xy) - radius, 0),
+            max(abs(relativePos.z) - height / 2, 0)
         );
         float dist;
-        if (posDiff.x + posDiff.y == 0) {
-            dist = max(length(diff.xz) - radius, abs(diff.y) - height / 2);
+        if (clampedRelativePos.x + clampedRelativePos.y == 0) {
+            dist = max(length(relativePos.xz) - radius, abs(relativePos.y) - height / 2);
         } else {
-            dist = length(posDiff);
+            dist = length(clampedRelativePos);
         }
 
         if (dist < closestObject.dist) {
             vec3 surfaceNormal;
-            if (length(diff.xy) < radius) {
-                surfaceNormal = normalize(vec3(0, 0, diff.z));
+            if (length(relativePos.xy) < radius) {
+                surfaceNormal = normalize(vec3(0, 0, -relativePos.z));
             } else {
-                surfaceNormal = normalize(vec3(diff.x, diff.y, 0));
+                surfaceNormal = normalize(vec3(-relativePos.x, -relativePos.y, 0));
             }
             closestObject = ObjectData(
                 i + 3 * numObjectsPerType,
                 cylinderMaterial[i],
-                0.5 + diff / vec3(radius, radius, height),
                 dist,
                 vec4(0.0),
-                surfaceNormal
+                undoRotation(surfaceNormal, cylinderRotation[i])
             );
             closestObject.colour = getColour(closestObject);
         }
@@ -209,7 +224,7 @@ highp ObjectData cylinderDistanceEstimator(in Ray ray, ObjectData closestObject)
 
 
 highp ObjectData distanceEstimator(in Ray ray) {
-    ObjectData closestObject = ObjectData(-1, -1, vec3(0), maxDistance, vec4(0), vec3(0));
+    ObjectData closestObject = ObjectData(-1, -1, maxDistance, vec4(0), vec3(0));
     closestObject = cubeDistanceEstimator(ray, closestObject);
     closestObject = insideCubeDistanceEstimator(ray, closestObject);
     closestObject = sphereDistanceEstimator(ray, closestObject);
@@ -250,7 +265,7 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in Ray ray) {
         highp float lightAngleVisibility = length(normDot)
             / (length(shadowRay.dirNorm) * length(rayClosestObject.surfaceNormal));
 
-        highp ObjectData closestPathObject = ObjectData(-1, -1, vec3(0), maxDistance, vec4(0), vec3(0));
+        highp ObjectData closestPathObject = ObjectData(-1, -1, maxDistance, vec4(0), vec3(0));
         highp vec3 closestPathPos = shadowRay.pos;
 
         while (distanceTravelled < dist - collisionTolerance && pointVisibility > 0.05) {

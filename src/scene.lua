@@ -1,6 +1,21 @@
 local rayMarchingShader = love.graphics.newShader('src/ray-marcher.frag')
 local shaderImage = love.graphics.newImage(love.image.newImageData(1, 1))
 
+local OBJECT_HANDLERS = {
+    ['cube'] = function(data)
+        return {data.width, data.height, data.depth}
+    end,
+    ['insideCube'] = function(data)
+        return {data.width, data.height, data.depth}
+    end,
+    ['sphere'] = function(data)
+        return data.radius
+    end,
+    ['cylinder'] = function(data)
+        return {data.radius, data.height}
+    end
+}
+
 local function cross(vecA, vecB)
     return {
         x = vecA.y * vecB.z - vecA.z * vecB.y,
@@ -15,6 +30,32 @@ local function normalize(vec)
         x = vec.x / length,
         y = vec.y / length,
         z = vec.z / length
+    }
+end
+
+local function rotationToMatrix(rotation)
+    local cos_yaw = math.cos(rotation.yaw)
+    local sin_yaw = math.sin(rotation.yaw)
+    local cos_pitch = math.cos(rotation.pitch)
+    local sin_pitch = math.sin(rotation.pitch)
+    local cos_roll = math.cos(rotation.roll)
+    local sin_roll = math.sin(rotation.roll)
+    return {
+        {
+            cos_yaw * cos_pitch,
+            cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll,
+            cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll
+        },
+        {
+            sin_yaw * cos_pitch,
+            sin_yaw * sin_pitch * sin_roll + cos_yaw * cos_roll,
+            sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll
+        },
+        {
+            -sin_pitch,
+            cos_pitch * sin_roll,
+            cos_pitch * cos_roll
+        }
     }
 end
 
@@ -34,12 +75,7 @@ return function(args)
     scene.ambientOcclusionMaxHeight = args.ambientOcclusionMaxHeight or 0
     scene.ambientOcclusionStrength = args.ambientOcclusionStrength or 0
 
-    scene.objects = {
-        cube = {data = {}, material = {}},
-        insideCube = {data = {}, material = {}},
-        sphere = {data = {}, material = {}},
-        cylinder = {data = {}, material = {}}
-    }
+    scene.objects = {}
     scene.lights = {
         positions = {},
         colours = {},
@@ -94,53 +130,27 @@ return function(args)
         )
     end
 
-    function scene:addCube(material, x, y, z, width, height, depth)
-        table.insert(self.objects.cube.material, self.materials.indexLookup[material])
-        table.insert(self.objects.cube.data, {x, y, z})
-        table.insert(self.objects.cube.data, {width, height, depth})
-    end
+    function scene:addObject(type, material, transform, data)
+        assert(OBJECT_HANDLERS[type] ~= nil, 'Object type "' .. type .. '" does not exist')
+        if self.objects[type] == nil then
+            self.objects[type] = {material = {}, position = {}, scale = {}, rotation = {}, data = {}}
+        end
 
-    function scene:addInsideCube(material, x, y, z, width, height, depth)
-        table.insert(self.objects.insideCube.material, self.materials.indexLookup[material])
-        table.insert(self.objects.insideCube.data, {x, y, z})
-        table.insert(self.objects.insideCube.data, {width, height, depth})
-    end
+        local scale = transform.scale or {}
+        local rotation = transform.rotation or {}
 
-    function scene:addSphere(material, x, y, z, radius)
-        table.insert(self.objects.sphere.material, self.materials.indexLookup[material])
-        table.insert(self.objects.sphere.data, {x, y, z, radius})
-    end
-
-    function scene:addCylinder(material, x, y, z, radius, height)
-        table.insert(self.objects.cylinder.material, self.materials.indexLookup[material])
-        table.insert(self.objects.cylinder.data, {x, y, z})
-        table.insert(self.objects.cylinder.data, {radius, height, 0})
+        table.insert(self.objects[type].material, self.materials.indexLookup[material])
+        table.insert(self.objects[type].position, transform.position)
+        table.insert(self.objects[type].scale, {scale[1] or 1, scale[2] or 1, scale[3] or 1})
+        table.insert(
+            self.objects[type].rotation,
+            rotationToMatrix({yaw = rotation[1] or 0, pitch = rotation[2] or 0, roll = rotation[3] or 0})
+        )
+        table.insert(self.objects[type].data, OBJECT_HANDLERS[type](data))
     end
 
     function scene:updateRotationMatrix()
-        local cos_yaw = math.cos(self.camera.yaw)
-        local sin_yaw = math.sin(self.camera.yaw)
-        local cos_pitch = math.cos(self.camera.pitch)
-        local sin_pitch = math.sin(self.camera.pitch)
-        local cos_roll = math.cos(self.camera.roll)
-        local sin_roll = math.sin(self.camera.roll)
-        self.camera.rotationMatrix = {
-            {
-                cos_yaw * cos_pitch,
-                cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll,
-                cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll
-            },
-            {
-                sin_yaw * cos_pitch,
-                sin_yaw * sin_pitch * sin_roll + cos_yaw * cos_roll,
-                sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll
-            },
-            {
-                -sin_pitch,
-                cos_pitch * sin_roll,
-                cos_pitch * cos_roll
-            }
-        }
+        self.camera.rotationMatrix = rotationToMatrix(self.camera)
     end
 
     function scene:setCamera(x, y, z, yaw, pitch, roll, viewPortDist)
@@ -216,11 +226,12 @@ return function(args)
         end
 
         for name, objectType in pairs(self.objects) do
-            if #objectType.data > 0 then
-                rayMarchingShader:send(name .. 'Data', unpack(objectType.data))
-                rayMarchingShader:send(name .. 'Material', unpack(objectType.material))
-                rayMarchingShader:send(name .. 'Count', #objectType.data)
-            end
+            rayMarchingShader:send(name .. 'Count', #objectType.material)
+            rayMarchingShader:send(name .. 'Material', unpack(objectType.material))
+            rayMarchingShader:send(name .. 'Position', unpack(objectType.position))
+            rayMarchingShader:send(name .. 'Data', unpack(objectType.data))
+            rayMarchingShader:send(name .. 'Scale', unpack(objectType.scale))
+            rayMarchingShader:send(name .. 'Rotation', unpack(objectType.rotation))
         end
 
         love.graphics.draw(shaderImage, x, y, 0, width / shaderImage:getWidth(), height / shaderImage:getHeight())

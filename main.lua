@@ -21,20 +21,25 @@ function love.load()
             ambientOcclusionStrength = 0.2
         }
     )
-    scene:addMaterial("room", {1.0, 1.0, 1.0})
-    scene:addMaterial("red", {1.0, 0.0, 0.0})
-    scene:addMaterial("green", {0.0, 1.0, 0.0}, 0.4, nil, nil, 0.6, 5, {1, 1, 0.3})
-    scene:addMaterial("blue", {0.0, 0.0, 1.0}, 0.4)
-    scene:addMaterial("chrome", {1.0, 1.0, 1.0}, 1.0)
-    scene:addMaterial("water", {0.6, 0.6, 1.0}, 0.4, 0.7, 225)
-    scene:addMaterial("glass", {1.0, 1.0, 1.0}, 0.5, 0.9, 200)
-    scene:addMaterial("diamond", {1.0, 1.0, 1.0}, 0.5, 0.8, 125)
-    scene:addMaterial("hidden", {1.0, 1.0, 1.0}, 1.0, 1.0, 250)
+    scene:addMaterial('room', {1.0, 1.0, 1.0})
+    scene:addMaterial('red', {1.0, 0.0, 0.0})
+    scene:addMaterial('green', {0.0, 1.0, 0.0}, 0.4, nil, nil, 0.6, 5, {1, 1, 0.3})
+    scene:addMaterial('blue', {0.0, 0.0, 1.0})
+    scene:addMaterial('chrome', {1.0, 1.0, 1.0}, 1.0)
+    scene:addMaterial('water', {0.6, 0.6, 1.0}, 0.4, 0.7, 225)
+    scene:addMaterial('glass', {1.0, 1.0, 1.0}, 0.5, 0.9, 200)
+    scene:addMaterial('diamond', {1.0, 1.0, 1.0}, 0.5, 0.8, 125)
+    scene:addMaterial('hidden', {1.0, 1.0, 1.0}, 1.0, 1.0, 250)
 
-    scene:addInsideCube("room", 0, 0, 0, 100, 100, 100)
-    scene:addCube("red", 0, 10, -10, 10, 10, 10)
-    scene:addCylinder("green", 0, 10, 10, 5, 10)
-    scene:addSphere("hidden", 0, -10, 0, 5)
+    scene:addObject('insideCube', 'room', {position = {0, 0, 0}}, {width = 100, height = 100, depth = 100})
+    scene:addObject(
+        'cube',
+        'red',
+        {position = {0, 10, -10}, scale = {1, 2, 1}, rotation = {math.pi / 4, math.pi / 4, 0}},
+        {width = 10, height = 10, depth = 10}
+    )
+    scene:addObject('cylinder', 'green', {position = {0, 10, 10}}, {radius = 5, height = 10})
+    scene:addObject('sphere', 'hidden', {position = {0, -10, 0}}, {radius = 5})
 
     scene:addLight(-20, -20, 0, nil, nil, nil, 1.2)
 end
@@ -71,10 +76,12 @@ function love.update(dt)
         relativePosOffset.y = relativePosOffset.y - positionSensitivity * dt
     end
     scene:addRelativePosition(relativePosOffset.x, relativePosOffset.y, relativePosOffset.z)
+    -- scene.camera.roll = 0 + math.sin(t)
+    -- scene:updateRotationMatrix()
 end
 
 function love.draw(dt)
     love.graphics.setShader()
     scene:draw(0, 0, love.graphics.getDimensions())
-    love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
+    love.graphics.print('FPS: ' .. love.timer.getFPS(), 10, 10)
 end
