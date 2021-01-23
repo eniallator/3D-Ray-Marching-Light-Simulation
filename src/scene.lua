@@ -66,7 +66,7 @@ return function(args)
     scene.maxDistance = args.maxDistance
     scene.globalMinLight = args.globalMinLight or 0
     scene.collisionTolerance = args.collisionTolerance or 0.1
-    scene.samplesPerAxis = args.samplesPerAxis or 2
+    scene.samplesPerPixelPerAxis = args.samplesPerPixelPerAxis or 2
     scene.maxReflections = args.maxReflections or 3
     scene.maxRefractionDepth = args.maxRefractionDepth or 4
     scene.spaceSpeedOfLight = args.spaceSpeedOfLight or 300
@@ -102,9 +102,10 @@ return function(args)
         viewPortDist = 1
     }
 
-    function scene:addLight(x, y, z, r, g, b, brightness)
-        table.insert(self.lights.positions, {x, y, z})
-        table.insert(self.lights.colours, {r or 1, g or 1, b or 1, 1})
+    function scene:addLight(position, colour, brightness)
+        colour = colour or {}
+        table.insert(self.lights.positions, position)
+        table.insert(self.lights.colours, {colour[1] or 1, colour[2] or 1, colour[3] or 1, 1})
         table.insert(self.lights.brightnesses, brightness or 1)
     end
 
@@ -194,7 +195,7 @@ return function(args)
         rayMarchingShader:send('maxDistance', self.maxDistance)
         rayMarchingShader:send('globalMinLight', self.globalMinLight)
         rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
-        rayMarchingShader:send('samplesPerAxis', self.samplesPerAxis)
+        rayMarchingShader:send('samplesPerPixelPerAxis', self.samplesPerPixelPerAxis)
         rayMarchingShader:send('maxReflections', self.maxReflections)
         rayMarchingShader:send('maxRefractionDepth', self.maxRefractionDepth)
         rayMarchingShader:send('spaceSpeedOfLight', self.spaceSpeedOfLight)

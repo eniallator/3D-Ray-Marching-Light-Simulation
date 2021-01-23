@@ -10,13 +10,13 @@ function love.load()
             maxDistance = math.sqrt(100 * 100 * 3),
             globalMinLight = 0.15,
             collisionTolerance = 0.01,
-            samplesPerAxis = 3,
+            samplesPerPixelPerAxis = 3,
             lightMaxRange = 200,
             maxReflections = 3,
             maxRefractionDepth = 3,
             spaceSpeedOfLight = 300,
             softShadowAngle = 0.02,
-            ambientOcclusionSamples = 10,
+            ambientOcclusionSamples = 5,
             ambientOcclusionMaxHeight = 3,
             ambientOcclusionStrength = 0.2
         }
@@ -41,7 +41,7 @@ function love.load()
     scene:addObject('cylinder', 'green', {position = {0, 10, 10}}, {radius = 5, height = 10})
     scene:addObject('sphere', 'hidden', {position = {0, -10, 0}}, {radius = 5})
 
-    scene:addLight(-20, -20, 0, nil, nil, nil, 1.2)
+    scene:addLight({-20, -20, 0}, nil, 1.2)
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -81,7 +81,6 @@ function love.update(dt)
 end
 
 function love.draw(dt)
-    love.graphics.setShader()
     scene:draw(0, 0, love.graphics.getDimensions())
     love.graphics.print('FPS: ' .. love.timer.getFPS(), 10, 10)
 end

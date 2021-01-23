@@ -8,7 +8,7 @@ uniform lowp vec2 dimensions;
 uniform lowp float maxDistance;
 uniform highp float globalMinLight;
 uniform mediump float collisionTolerance;
-uniform lowp float samplesPerAxis;
+uniform lowp float samplesPerPixelPerAxis;
 uniform lowp int maxReflections;
 uniform lowp int maxRefractionDepth;
 uniform highp float spaceSpeedOfLight;
@@ -414,7 +414,7 @@ mediump vec4 rayMarch(in Ray ray) {
 vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in vec2 screenCoords) {
     vec4 colour = vec4(0);
     vec2 coords = dimensions * textureCoords;
-    highp float rangeExtreme = 0.5 - 1 / (2 * samplesPerAxis);
+    highp float rangeExtreme = 0.5 - 1 / (2 * samplesPerPixelPerAxis);
 
     int materialIndex = -1;
     ObjectData closestObject = distanceEstimator(Ray(cameraPos, vec3(0), materialIndex));
@@ -422,8 +422,8 @@ vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in ve
         materialIndex = closestObject.materialIndex;
     }
 
-    for (highp float x = -rangeExtreme; x < 0.5; x += 1 / samplesPerAxis) {
-        for (highp float y = -rangeExtreme; y < 0.5; y += 1 / samplesPerAxis) {
+    for (highp float x = -rangeExtreme; x < 0.5; x += 1 / samplesPerPixelPerAxis) {
+        for (highp float y = -rangeExtreme; y < 0.5; y += 1 / samplesPerPixelPerAxis) {
             vec2 adjustedOffset = (coords + vec2(x, y)) / dimensions;
             vec2 relativeOffset = (adjustedOffset - vec2(0.5)) * vec2(dimensions.x / dimensions.y, 1);
             vec3 relativeDir = vec3(cameraViewPortDist, -relativeOffset.x, relativeOffset.y);
@@ -432,5 +432,5 @@ vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in ve
             colour += rayMarch(Ray(cameraPos, dirNorm, materialIndex));
         }
     }
-    return colour / (samplesPerAxis * samplesPerAxis);
+    return colour / (samplesPerPixelPerAxis * samplesPerPixelPerAxis);
 }
