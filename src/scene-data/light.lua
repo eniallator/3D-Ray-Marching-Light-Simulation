@@ -1,4 +1,4 @@
-local classUtilities = require 'src.class-utilities'
+local classUtilities = require 'src.utils.class-utilities'
 
 return function(args)
     local light = {class = 'Light'}

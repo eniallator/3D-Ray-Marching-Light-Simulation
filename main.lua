@@ -1,5 +1,5 @@
 local Scene, scene = require 'src.scene'
-local keys = require 'src.keys'
+local keys = require 'src.utils.keys'
 local viewAngleSensitivity = 0.005
 local positionSensitivity = 30
 local Object = require 'src.scene-data.object'

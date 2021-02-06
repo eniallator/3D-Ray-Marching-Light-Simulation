@@ -1,4 +1,4 @@
-local classUtilities = require 'src.class-utilities'
+local classUtilities = require 'src.utils.class-utilities'
 local rayMarchingShader = love.graphics.newShader('src/ray-marcher.frag')
 local shaderImage = love.graphics.newImage(love.image.newImageData(1, 1))
 

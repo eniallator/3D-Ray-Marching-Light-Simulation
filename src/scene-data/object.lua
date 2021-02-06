@@ -1,5 +1,5 @@
-local classUtilities = require 'src.class-utilities'
-local Transformable = require 'src.transformable'
+local classUtilities = require 'src.utils.class-utilities'
+local Transformable = require 'src.utils.transformable'
 local OBJECT_HANDLERS = {
     ['cube'] = function(data)
         return classUtilities.validateOrComplain(
@@ -36,6 +36,10 @@ return function(args)
     object.type = args.type
     object.material = args.material
     object.data = OBJECT_HANDLERS[args.type](args.data)
+
+    function object:setData(newData)
+        self.data = OBJECT_HANDLERS[self.type](newData)
+    end
 
     return object
 end
