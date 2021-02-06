@@ -20,7 +20,7 @@ local OBJECT_HANDLERS = {
     ['cylinder'] = function(data)
         return classUtilities.validateOrComplain(
             {data.radius, data.height},
-            {radius = 'number', height = 'number'},
+            {'number', 'number'},
             'Invalid cylinder data'
         )
     end

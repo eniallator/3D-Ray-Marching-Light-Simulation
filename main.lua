@@ -2,6 +2,9 @@ local Scene, scene = require 'src.scene'
 local keys = require 'src.keys'
 local viewAngleSensitivity = 0.005
 local positionSensitivity = 30
+local Object = require 'src.scene-data.object'
+local Light = require 'src.scene-data.light'
+local Material = require 'src.scene-data.material'
 
 function love.load()
     scene =
@@ -21,27 +24,72 @@ function love.load()
             ambientOcclusionStrength = 0.2
         }
     )
-    scene:addMaterial('room', {1.0, 1.0, 1.0})
-    scene:addMaterial('red', {1.0, 0.0, 0.0})
-    scene:addMaterial('green', {0.0, 1.0, 0.0}, 0.4, nil, nil, 0.6, 5, {1, 1, 0.3})
-    scene:addMaterial('blue', {0.0, 0.0, 1.0})
-    scene:addMaterial('chrome', {1.0, 1.0, 1.0}, 1.0)
-    scene:addMaterial('water', {0.6, 0.6, 1.0}, 0.4, 0.7, 225)
-    scene:addMaterial('glass', {1.0, 1.0, 1.0}, 0.5, 0.9, 200)
-    scene:addMaterial('diamond', {1.0, 1.0, 1.0}, 0.5, 0.8, 125)
-    scene:addMaterial('hidden', {1.0, 1.0, 1.0}, 1.0, 1.0, 250)
 
-    scene:addObject('insideCube', 'room', {position = {0, 0, 0}}, {width = 100, height = 100, depth = 100})
-    scene:addObject(
-        'cube',
-        'red',
-        {position = {0, 10, -10}, scale = {1, 2, 1}, rotation = {math.pi / 4, math.pi / 4, 0}},
-        {width = 10, height = 10, depth = 10}
+    local roomMaterial = Material()
+    scene:registerMaterial(roomMaterial)
+    local red = Material({colour = {1, 0, 0}})
+    scene:registerMaterial(red)
+    local green =
+        Material(
+        {
+            colour = {0, 1, 0},
+            reflectance = 0.4,
+            glowStrength = 0.4,
+            glowRange = 5,
+            glowColour = {1, 1, 0.3}
+        }
     )
-    scene:addObject('cylinder', 'green', {position = {0, 10, 10}}, {radius = 5, height = 10})
-    scene:addObject('sphere', 'hidden', {position = {0, -10, 0}}, {radius = 5})
+    scene:registerMaterial(green)
+    local blue = Material({colour = {0, 0, 1}})
+    scene:registerMaterial(blue)
+    local chrome = Material({reflectance = 1})
+    scene:registerMaterial(chrome)
+    local water = Material({colour = {0.6, 0.6, 1}, reflectance = 0.4, transparency = 0.7, speedOfLight = 225})
+    scene:registerMaterial(water)
+    local glass = Material({colour = {0.776, 0.886, 0.89}, reflectance = 1.0, transparency = 0.9, speedOfLight = 200})
+    scene:registerMaterial(glass)
+    local diamond = Material({reflectance = 0.5, transparency = 0.8, speedOfLight = 125})
+    scene:registerMaterial(diamond)
+    local hidden = Material({transparency = 1, speedOfLight = 250})
+    scene:registerMaterial(hidden)
 
-    scene:addLight({-20, -20, 0}, nil, 1.2)
+    local cube =
+        Object(
+        {
+            type = 'cube',
+            material = red,
+            position = {0, 10, -10},
+            scale = {1, 2, 1},
+            rotation = {math.pi / 4, math.pi / 4, 0},
+            data = {width = 10, height = 10, depth = 10}
+        }
+    )
+    scene:registerObject(cube)
+    local sphere = Object({type = 'sphere', material = hidden, position = {0, -10, 0}, data = {radius = 5}})
+    scene:registerObject(sphere)
+    local cylinder =
+        Object({type = 'cylinder', material = green, position = {0, 10, 10}, data = {radius = 5, height = 10}})
+    scene:registerObject(cylinder)
+    local room =
+        Object(
+        {
+            type = 'insideCube',
+            material = roomMaterial,
+            position = {0, 0, 0},
+            data = {width = 100, height = 100, depth = 100}
+        }
+    )
+    scene:registerObject(room)
+    scene:registerLight(
+        Light(
+            {
+                position = {-20, -20, 0},
+                brightness = 1.2
+            }
+        )
+    )
+
+    scene:loadAllData()
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -76,8 +124,6 @@ function love.update(dt)
         relativePosOffset.y = relativePosOffset.y - positionSensitivity * dt
     end
     scene:addRelativePosition(relativePosOffset.x, relativePosOffset.y, relativePosOffset.z)
-    -- scene.camera.roll = 0 + math.sin(t)
-    -- scene:updateRotationMatrix()
 end
 
 function love.draw(dt)

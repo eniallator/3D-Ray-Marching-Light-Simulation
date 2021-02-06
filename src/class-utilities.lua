@@ -38,27 +38,27 @@ classUtilities.validateOrComplain = function(value, types, message)
 end
 
 classUtilities.rotationToMatrix = function(rotation)
-    local cos_yaw = math.cos(rotation.yaw)
-    local sin_yaw = math.sin(rotation.yaw)
-    local cos_pitch = math.cos(rotation.pitch)
-    local sin_pitch = math.sin(rotation.pitch)
-    local cos_roll = math.cos(rotation.roll)
-    local sin_roll = math.sin(rotation.roll)
+    local cosYaw = math.cos(rotation.yaw)
+    local sinYaw = math.sin(rotation.yaw)
+    local cosPitch = math.cos(rotation.pitch)
+    local sinPitch = math.sin(rotation.pitch)
+    local cosRoll = math.cos(rotation.roll)
+    local sinRoll = math.sin(rotation.roll)
     return {
         {
-            cos_yaw * cos_pitch,
-            cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll,
-            cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll
+            cosYaw * cosPitch,
+            cosYaw * sinPitch * sinRoll - sinYaw * cosRoll,
+            cosYaw * sinPitch * cosRoll + sinYaw * sinRoll
         },
         {
-            sin_yaw * cos_pitch,
-            sin_yaw * sin_pitch * sin_roll + cos_yaw * cos_roll,
-            sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll
+            sinYaw * cosPitch,
+            sinYaw * sinPitch * sinRoll + cosYaw * cosRoll,
+            sinYaw * sinPitch * cosRoll - cosYaw * sinRoll
         },
         {
-            -sin_pitch,
-            cos_pitch * sin_roll,
-            cos_pitch * cos_roll
+            -sinPitch,
+            cosPitch * sinRoll,
+            cosPitch * cosRoll
         }
     }
 end
