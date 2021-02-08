@@ -4,23 +4,6 @@ local classUtilities = require 'src.utils.class-utilities'
 local rayMarchingShader = love.graphics.newShader('src/ray-marcher.frag')
 local shaderImage = love.graphics.newImage(love.image.newImageData(1, 1))
 
-local function cross(vecA, vecB)
-    return {
-        x = vecA.y * vecB.z - vecA.z * vecB.y,
-        y = vecA.z * vecB.x - vecA.x * vecB.z,
-        z = vecA.x * vecB.y - vecA.y * vecB.x
-    }
-end
-
-local function normalize(vec)
-    local length = math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
-    return {
-        x = vec.x / length,
-        y = vec.y / length,
-        z = vec.z / length
-    }
-end
-
 return function(args)
     args = args or {}
 
