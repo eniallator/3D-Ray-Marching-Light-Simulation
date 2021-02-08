@@ -100,6 +100,7 @@ return function(args)
                 }
             end
 
+            assert(self.cache.materialLookup, 'Tried loading objects before materials. Must load materials first!')
             local materialId = self.cache.materialLookup[tostring(object.material)]
             assert(materialId, 'Tried loading an object with an unknown material')
             table.insert(self.cache.objects[object.type].material, materialId)
