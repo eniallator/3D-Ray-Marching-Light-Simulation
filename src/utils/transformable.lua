@@ -30,11 +30,11 @@ return function(args)
     function transformable:addRelativePosition(x, y, z)
         local offset = classUtilities.validateOrDefault({x, y, z}, {0, 0, 0})
         self.position = {
-            self.position.x + offset[1] * self.rotationMatrix[1][1] + offset[2] * self.rotationMatrix[1][2] +
+            self.position[1] + offset[1] * self.rotationMatrix[1][1] + offset[2] * self.rotationMatrix[1][2] +
                 offset[3] * self.rotationMatrix[1][3],
-            self.position.y + offset[1] * self.rotationMatrix[2][1] + offset[2] * self.rotationMatrix[2][2] +
+            self.position[2] + offset[1] * self.rotationMatrix[2][1] + offset[2] * self.rotationMatrix[2][2] +
                 offset[3] * self.rotationMatrix[2][3],
-            self.position.z + offset[1] * self.rotationMatrix[3][1] + offset[2] * self.rotationMatrix[3][2] +
+            self.position[3] + offset[1] * self.rotationMatrix[3][1] + offset[2] * self.rotationMatrix[3][2] +
                 offset[3] * self.rotationMatrix[3][3]
         }
     end

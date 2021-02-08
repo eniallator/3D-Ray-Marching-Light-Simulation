@@ -1,4 +1,6 @@
+local Transformable = require 'src.utils.transformable'
 local classUtilities = require 'src.utils.class-utilities'
+
 local rayMarchingShader = love.graphics.newShader('src/ray-marcher.frag')
 local shaderImage = love.graphics.newImage(love.image.newImageData(1, 1))
 
@@ -39,25 +41,25 @@ return function(args)
     scene.objects = {}
     scene.lights = {}
     scene.materials = {}
-    scene.camera = {
-        x = 0,
-        y = 0,
-        z = 0,
-        yaw = 0,
-        pitch = 0,
-        roll = 0,
-        viewPortDist = 1
-    }
     scene.cache = {}
+
+    scene.camera = Transformable({position = {0, 0, 0}})
+    scene.camera.viewportDist = 1
+
+    function scene.camera:setViewportDist(dist)
+        scene.camera.viewportDist = dist
+    end
 
     function scene:registerLight(light)
         assert(light.class == 'Light', 'Tried registering a non-light as a light')
         table.insert(self.lights, light)
     end
+
     function scene:registerMaterial(material)
         assert(material.class == 'Material', 'Tried registering a non-material as a material')
         table.insert(self.materials, material)
     end
+
     function scene:registerObject(object)
         assert(object.class == 'Object', 'Tried registering a non-object as an object')
         table.insert(self.objects, object)
@@ -73,6 +75,7 @@ return function(args)
             table.insert(self.cache.lights.brightness, light.brightness)
         end
     end
+
     function scene:loadMaterials()
         self.cache.materials = {
             colour = {},
@@ -98,6 +101,7 @@ return function(args)
             table.insert(self.cache.materials.glowColour, material.glowColour)
         end
     end
+
     function scene:loadObjects()
         self.cache.objects = {}
         local i
@@ -129,42 +133,6 @@ return function(args)
         self:loadObjects()
     end
 
-    function scene:updateRotationMatrix()
-        self.camera.rotationMatrix = classUtilities.rotationToMatrix(self.camera)
-    end
-
-    function scene:setCamera(x, y, z, yaw, pitch, roll, viewPortDist)
-        self.camera.x = x or self.camera.x
-        self.camera.y = y or self.camera.y
-        self.camera.z = z or self.camera.z
-        self.camera.yaw = yaw or self.camera.yaw
-        self.camera.pitch = pitch or self.camera.pitch
-        self.camera.roll = roll or self.camera.roll
-        self.camera.viewPortDist = viewPortDist or self.camera.viewPortDist
-        if yaw or pitch or roll then
-            self:updateRotationMatrix()
-        end
-    end
-
-    function scene:offsetCamera(x, y, z, yaw, pitch, roll)
-        self.camera.x = self.camera.x + (x or 0)
-        self.camera.y = self.camera.y + (y or 0)
-        self.camera.z = self.camera.z + (z or 0)
-        self.camera.yaw = self.camera.yaw + (yaw or 0)
-        self.camera.pitch = self.camera.pitch + (pitch or 0)
-        self.camera.roll = self.camera.roll + (roll or 0)
-        if yaw or pitch or roll then
-            self:updateRotationMatrix()
-        end
-    end
-
-    function scene:addRelativePosition(x, y, z)
-        local mat = self.camera.rotationMatrix
-        self.camera.x = self.camera.x + x * mat[1][1] + y * mat[1][2] + z * mat[1][3]
-        self.camera.y = self.camera.y + x * mat[2][1] + y * mat[2][2] + z * mat[2][3]
-        self.camera.z = self.camera.z + x * mat[3][1] + y * mat[3][2] + z * mat[3][3]
-    end
-
     function scene:draw(x, y, width, height)
         local oldShader = love.graphics.getShader()
 
@@ -184,9 +152,9 @@ return function(args)
         rayMarchingShader:send('ambientOcclusionMaxHeight', self.ambientOcclusionMaxHeight)
         rayMarchingShader:send('ambientOcclusionStrength', self.ambientOcclusionStrength)
 
-        rayMarchingShader:send('cameraPos', {self.camera.x, self.camera.y, self.camera.z})
+        rayMarchingShader:send('cameraPos', {self.camera.position[1], self.camera.position[2], self.camera.position[3]})
         rayMarchingShader:send('cameraRotationMatrix', self.camera.rotationMatrix)
-        rayMarchingShader:send('cameraViewPortDist', self.camera.viewPortDist)
+        rayMarchingShader:send('cameraViewportDist', self.camera.viewportDist)
 
         rayMarchingShader:send('lightCount', #self.cache.lights.position)
         if #self.cache.lights.position > 0 then
@@ -218,8 +186,6 @@ return function(args)
 
         love.graphics.setShader(oldShader)
     end
-
-    scene:updateRotationMatrix()
 
     return scene
 end

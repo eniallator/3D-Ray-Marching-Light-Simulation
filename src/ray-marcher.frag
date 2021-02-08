@@ -19,7 +19,7 @@ uniform highp float ambientOcclusionStrength;
 
 uniform highp vec3 cameraPos;
 uniform highp mat3 cameraRotationMatrix;
-uniform highp float cameraViewPortDist;
+uniform highp float cameraViewportDist;
 
 uniform highp vec3 lightPositions[numLights];
 uniform highp vec4 lightColours[numLights];
@@ -426,7 +426,7 @@ vec4 effect(in vec4 inColour, in sampler2D texture, in vec2 textureCoords, in ve
         for (highp float y = -rangeExtreme; y < 0.5; y += 1 / samplesPerPixelPerAxis) {
             vec2 adjustedOffset = (coords + vec2(x, y)) / dimensions;
             vec2 relativeOffset = (adjustedOffset - vec2(0.5)) * vec2(dimensions.x / dimensions.y, 1);
-            vec3 relativeDir = vec3(cameraViewPortDist, -relativeOffset.x, relativeOffset.y);
+            vec3 relativeDir = vec3(cameraViewportDist, -relativeOffset.x, relativeOffset.y);
             vec3 dirNorm = normalize(cameraRotationMatrix * relativeDir);
 
             colour += rayMarch(Ray(cameraPos, dirNorm, materialIndex));
