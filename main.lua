@@ -24,6 +24,7 @@ function love.load()
             ambientOcclusionStrength = 0.2
         }
     )
+    scene.camera:setPosition(-40, 0, 0)
 
     local roomMaterial = Material()
     scene:registerMaterial(roomMaterial)
@@ -52,6 +53,8 @@ function love.load()
     scene:registerMaterial(diamond)
     local hidden = Material({transparency = 1, speedOfLight = 250})
     scene:registerMaterial(hidden)
+    local radioactive = Material({colour = {0, 1, 0}, glowStrength = 0.1, glowRange = 0.5, glowColour = {1, 1, 0.3}})
+    scene:registerMaterial(radioactive)
 
     local cube =
         Object(
@@ -70,6 +73,17 @@ function love.load()
     local cylinder =
         Object({type = 'cylinder', material = green, position = {0, 10, 10}, data = {radius = 5, height = 10}})
     scene:registerObject(cylinder)
+    local mandelbulb =
+        Object(
+        {
+            type = 'mandelbulb',
+            material = radioactive,
+            position = {0, 0, 0},
+            scale = {4, 4, 4},
+            data = {iterations = 40, power = 3}
+        }
+    )
+    scene:registerObject(mandelbulb)
     local room =
         Object(
         {

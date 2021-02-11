@@ -20,6 +20,7 @@ return function(args)
     scene.ambientOcclusionSamples = args.ambientOcclusionSamples or 0
     scene.ambientOcclusionMaxHeight = args.ambientOcclusionMaxHeight or 0
     scene.ambientOcclusionStrength = args.ambientOcclusionStrength or 0
+    scene.configRefreshed = true
 
     scene.objects = {}
     scene.lights = {}
@@ -49,7 +50,7 @@ return function(args)
     end
 
     function scene:loadLights()
-        self.cache.lights = {position = {}, colour = {}, brightness = {}}
+        self.cache.lights = {position = {}, colour = {}, brightness = {}, refreshed = true}
         local i
         for i = 1, #self.lights do
             local light = self.lights[i]
@@ -67,8 +68,12 @@ return function(args)
             transparency = {},
             glowStrength = {},
             glowRange = {},
-            glowColour = {}
+            glowColour = {},
+            refreshed = true
         }
+        if self.cache.objects then
+            self.cache.objects.refreshed = true
+        end
         self.cache.materialLookup = {}
         local i
         for i = 1, #self.materials do
@@ -86,7 +91,7 @@ return function(args)
     end
 
     function scene:loadObjects()
-        self.cache.objects = {}
+        self.cache.objects = {refreshed = true}
         local i
         for i = 1, #self.objects do
             local object = self.objects[i]
@@ -123,31 +128,39 @@ return function(args)
         love.graphics.setShader(rayMarchingShader)
 
         rayMarchingShader:send('dimensions', {width, height})
-        rayMarchingShader:send('maxDistance', self.maxDistance)
-        rayMarchingShader:send('globalMinLight', self.globalMinLight)
-        rayMarchingShader:send('lightMaxRange', self.lightMaxRange)
-        rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
-        rayMarchingShader:send('samplesPerPixelPerAxis', self.samplesPerPixelPerAxis)
-        rayMarchingShader:send('maxReflections', self.maxReflections)
-        rayMarchingShader:send('maxRefractionDepth', self.maxRefractionDepth)
-        rayMarchingShader:send('spaceSpeedOfLight', self.spaceSpeedOfLight)
-        rayMarchingShader:send('softShadowAngle', self.softShadowAngle)
-        rayMarchingShader:send('ambientOcclusionSamples', self.ambientOcclusionSamples)
-        rayMarchingShader:send('ambientOcclusionMaxHeight', self.ambientOcclusionMaxHeight)
-        rayMarchingShader:send('ambientOcclusionStrength', self.ambientOcclusionStrength)
+
+        if self.configRefreshed then
+            self.configRefreshed = false
+            rayMarchingShader:send('maxDistance', self.maxDistance)
+            rayMarchingShader:send('globalMinLight', self.globalMinLight)
+            rayMarchingShader:send('lightMaxRange', self.lightMaxRange)
+            rayMarchingShader:send('collisionTolerance', self.collisionTolerance)
+            rayMarchingShader:send('samplesPerPixelPerAxis', self.samplesPerPixelPerAxis)
+            rayMarchingShader:send('maxReflections', self.maxReflections)
+            rayMarchingShader:send('maxRefractionDepth', self.maxRefractionDepth)
+            rayMarchingShader:send('spaceSpeedOfLight', self.spaceSpeedOfLight)
+            rayMarchingShader:send('softShadowAngle', self.softShadowAngle)
+            rayMarchingShader:send('ambientOcclusionSamples', self.ambientOcclusionSamples)
+            rayMarchingShader:send('ambientOcclusionMaxHeight', self.ambientOcclusionMaxHeight)
+            rayMarchingShader:send('ambientOcclusionStrength', self.ambientOcclusionStrength)
+        end
 
         rayMarchingShader:send('cameraPos', {self.camera.position[1], self.camera.position[2], self.camera.position[3]})
         rayMarchingShader:send('cameraRotationMatrix', self.camera.rotationMatrix)
         rayMarchingShader:send('cameraViewportDist', self.camera.viewportDist)
 
-        rayMarchingShader:send('lightCount', #self.cache.lights.position)
-        if #self.cache.lights.position > 0 then
-            rayMarchingShader:send('lightPositions', unpack(self.cache.lights.position))
-            rayMarchingShader:send('lightColours', unpack(self.cache.lights.colour))
-            rayMarchingShader:send('lightBrightnesses', unpack(self.cache.lights.brightness))
+        if self.cache.lights.refreshed then
+            self.cache.lights.refreshed = false
+            rayMarchingShader:send('lightCount', #self.cache.lights.position)
+            if #self.cache.lights.position > 0 then
+                rayMarchingShader:send('lightPositions', unpack(self.cache.lights.position))
+                rayMarchingShader:send('lightColours', unpack(self.cache.lights.colour))
+                rayMarchingShader:send('lightBrightnesses', unpack(self.cache.lights.brightness))
+            end
         end
 
-        if #self.cache.materials.colour > 0 then
+        if self.cache.materials.refreshed and #self.cache.materials.colour > 0 then
+            self.cache.materials.refreshed = false
             rayMarchingShader:send('materialColours', unpack(self.cache.materials.colour))
             rayMarchingShader:send('materialReflectances', unpack(self.cache.materials.reflectance))
             rayMarchingShader:send('materialSpeedsOfLight', unpack(self.cache.materials.speedOfLight))
@@ -157,13 +170,19 @@ return function(args)
             rayMarchingShader:send('materialGlowColours', unpack(self.cache.materials.glowColour))
         end
 
-        for name, objectType in pairs(self.cache.objects) do
-            rayMarchingShader:send(name .. 'Count', #objectType.material)
-            rayMarchingShader:send(name .. 'Material', unpack(objectType.material))
-            rayMarchingShader:send(name .. 'Position', unpack(objectType.position))
-            rayMarchingShader:send(name .. 'Data', unpack(objectType.data))
-            rayMarchingShader:send(name .. 'Scale', unpack(objectType.scale))
-            rayMarchingShader:send(name .. 'Rotation', unpack(objectType.rotationMatrix))
+        if self.cache.objects.refreshed then
+            self.cache.objects.refreshed = false
+            for name, objectType in pairs(self.cache.objects) do
+                if name ~= 'refreshed' then
+                    print(name, #objectType.material)
+                    rayMarchingShader:send(name .. 'Count', #objectType.material)
+                    rayMarchingShader:send(name .. 'Material', unpack(objectType.material))
+                    rayMarchingShader:send(name .. 'Position', unpack(objectType.position))
+                    rayMarchingShader:send(name .. 'Data', unpack(objectType.data))
+                    rayMarchingShader:send(name .. 'Scale', unpack(objectType.scale))
+                    rayMarchingShader:send(name .. 'Rotation', unpack(objectType.rotationMatrix))
+                end
+            end
         end
 
         love.graphics.draw(shaderImage, x, y, 0, width / shaderImage:getWidth(), height / shaderImage:getHeight())
