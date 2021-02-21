@@ -10,7 +10,7 @@ return function(args)
     args = args or {}
 
     local scene = {}
-    scene.maxDistance = args.maxDistance
+    scene.maxDistance = args.maxDistance or 200
     scene.globalMinLight = args.globalMinLight or 0
     scene.lightMaxRange = args.lightMaxRange or 200
     scene.collisionTolerance = args.collisionTolerance or 0.1
@@ -18,7 +18,7 @@ return function(args)
     scene.maxReflections = args.maxReflections or 3
     scene.maxRefractionDepth = args.maxRefractionDepth or 4
     scene.spaceSpeedOfLight = args.spaceSpeedOfLight or 300
-    scene.softShadowAngle = args.softShadowAngle or 0.0
+    scene.softShadowAngle = args.softShadowAngle or 0
     scene.ambientOcclusionSamples = args.ambientOcclusionSamples or 0
     scene.ambientOcclusionMaxHeight = args.ambientOcclusionMaxHeight or 0
     scene.ambientOcclusionStrength = args.ambientOcclusionStrength or 0
@@ -30,6 +30,8 @@ return function(args)
     scene.cache = {}
 
     scene.camera = Transformable({position = {0, 0, 0}})
+    scene.camera.scale = nil
+    scene.camera.setScale = nil
     scene.camera.viewportDist = 1
 
     function scene.camera:setViewportDist(dist)
@@ -125,6 +127,10 @@ return function(args)
     end
 
     function scene:draw(x, y, width, height)
+        assert(self.cache.objects, 'Tried drawing without objects being loaded')
+        assert(self.cache.materials, 'Tried drawing without materials being loaded')
+        assert(self.cache.lights, 'Tried drawing without lights being loaded')
+
         local oldShader = love.graphics.getShader()
 
         love.graphics.setShader(rayMarchingShader)

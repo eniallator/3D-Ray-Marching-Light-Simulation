@@ -15,7 +15,7 @@ return function(args)
         self.position = classUtilities.validateOrDefault({x, y, z}, self.position)
     end
 
-    function transformable:addWorldPosition(x, y, z)
+    function transformable:addAbsolutePosition(x, y, z)
         local offset = classUtilities.validateOrDefault({x, y, z}, {0, 0, 0})
         self.position = {
             self.position[1] + offset[1],
