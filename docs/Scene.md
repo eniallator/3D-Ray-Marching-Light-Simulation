@@ -72,23 +72,20 @@ This will hold all of the configured scene properties as well as the configured 
 ### Example Constructor
 
 ```lua
-scene =
-    RayMarcher.Scene(
-    {
-        maxDistance = 300,
-        globalMinLight = 0.15,
-        collisionTolerance = 0.01,
-        samplesPerPixelPerAxis = 3,
-        lightMaxRange = 200,
-        maxReflections = 3,
-        maxRefractionDepth = 3,
-        spaceSpeedOfLight = 300,
-        softShadowAngle = 0.02,
-        ambientOcclusionSamples = 5,
-        ambientOcclusionMaxHeight = 3,
-        ambientOcclusionStrength = 0.2
-    }
-)
+scene = RayMarcher.Scene({
+    maxDistance = 300,
+    globalMinLight = 0.15,
+    collisionTolerance = 0.01,
+    samplesPerPixelPerAxis = 3,
+    lightMaxRange = 200,
+    maxReflections = 3,
+    maxRefractionDepth = 3,
+    spaceSpeedOfLight = 300,
+    softShadowAngle = 0.02,
+    ambientOcclusionSamples = 5,
+    ambientOcclusionMaxHeight = 3,
+    ambientOcclusionStrength = 0.2
+})
 ```
 
 ## Scene Methods
