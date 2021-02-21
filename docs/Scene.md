@@ -4,19 +4,19 @@ This will hold all of the configured scene properties as well as the configured 
 
 ## Method Index
 
-- [scene:registerLight](#scene:registerLight)
-- [scene:registerMaterial](#scene:registerMaterial)
-- [scene:registerObject](#scene:registerObject)
-- [scene:loadLights](#scene:loadLights)
-- [scene:loadMaterials](#scene:loadMaterials)
-- [scene:loadObjects](#scene:loadObjects)
-- [scene:loadAllData](#scene:loadAllData)
-- [scene:draw](#scene:draw)
-- [scene.camera:setPosition](#scene.camera:setPosition)
-- [scene.camera:addAbsolutePosition](#scene.camera:addAbsolutePosition)
-- [scene.camera:addRelativePosition](#scene.camera:addRelativePosition)
-- [scene.camera:setRotation](#scene.camera:setRotation)
-- [scene.camera:addRotation](#scene.camera:addRotation)
+- [scene:registerLight](#sceneregisterLight)
+- [scene:registerMaterial](#sceneregisterMaterial)
+- [scene:registerObject](#sceneregisterObject)
+- [scene:loadLights](#sceneloadLights)
+- [scene:loadMaterials](#sceneloadMaterials)
+- [scene:loadObjects](#sceneloadObjects)
+- [scene:loadAllData](#sceneloadAllData)
+- [scene:draw](#scenedraw)
+- [scene.camera:setPosition](#scenecamerasetPosition)
+- [scene.camera:addAbsolutePosition](#scenecameraaddAbsolutePosition)
+- [scene.camera:addRelativePosition](#scenecameraaddRelativePosition)
+- [scene.camera:setRotation](#scenecamerasetRotation)
+- [scene.camera:addRotation](#scenecameraaddRotation)
 
 ## Constructor Arguments
 
