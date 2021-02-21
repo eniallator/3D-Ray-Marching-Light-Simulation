@@ -318,15 +318,15 @@ _**Arguments**_:
 - `yaw`
   - **Type**: `Number`
   - **Default**: `0`
-  - **Description**: The `yaw` value to set
+  - **Description**: The `yaw` value to add
 - `pitch`
   - **Type**: `Number`
   - **Default**: `0`
-  - **Description**: The `pitch` value to set
+  - **Description**: The `pitch` value to add
 - `roll`
   - **Type**: `Number`
   - **Default**: `0`
-  - **Description**: The `roll` value to set
+  - **Description**: The `roll` value to add
 
 _**Example Usage**_:
 
