@@ -1,5 +1,7 @@
-local Transformable = require 'src.utils.transformable'
-local classUtilities = require 'src.utils.class-utilities'
+local outerFolder = (...):match('(.-)[^%.]+$')
+
+local Transformable = require(outerFolder .. 'utils.transformable')
+local classUtilities = require(outerFolder .. 'utils.class-utilities')
 
 local rayMarchingShader = love.graphics.newShader('src/ray-marcher.frag')
 local shaderImage = love.graphics.newImage(love.image.newImageData(1, 1))
@@ -174,7 +176,6 @@ return function(args)
             self.cache.objects.refreshed = false
             for name, objectType in pairs(self.cache.objects) do
                 if name ~= 'refreshed' then
-                    print(name, #objectType.material)
                     rayMarchingShader:send(name .. 'Count', #objectType.material)
                     rayMarchingShader:send(name .. 'Material', unpack(objectType.material))
                     rayMarchingShader:send(name .. 'Position', unpack(objectType.position))

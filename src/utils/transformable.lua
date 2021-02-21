@@ -1,4 +1,6 @@
-local classUtilities = require 'src.utils.class-utilities'
+local outerFolder = (...):match('(.-)[^%.]+$')
+
+local classUtilities = require(outerFolder .. 'class-utilities')
 
 return function(args)
     local transformable = {}

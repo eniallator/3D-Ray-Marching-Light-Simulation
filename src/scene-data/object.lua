@@ -1,5 +1,9 @@
-local classUtilities = require 'src.utils.class-utilities'
-local Transformable = require 'src.utils.transformable'
+local srcFolder = (...):match('(.-)[^%.]+$')
+srcFolder = srcFolder:sub(1, -2):match('(.-)[^%.]+$')
+
+local classUtilities = require(srcFolder .. 'utils.class-utilities')
+local Transformable = require(srcFolder .. 'utils.transformable')
+
 local OBJECT_HANDLERS = {
     ['cube'] = function(data)
         return classUtilities.validateOrComplain(

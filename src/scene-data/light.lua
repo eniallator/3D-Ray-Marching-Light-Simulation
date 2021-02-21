@@ -1,4 +1,7 @@
-local classUtilities = require 'src.utils.class-utilities'
+local srcFolder = (...):match('(.-)[^%.]+$')
+srcFolder = srcFolder:sub(1, -2):match('(.-)[^%.]+$')
+
+local classUtilities = require(srcFolder .. 'utils.class-utilities')
 
 return function(args)
     local light = {class = 'Light'}
