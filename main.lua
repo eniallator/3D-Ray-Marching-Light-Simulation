@@ -1,14 +1,12 @@
-local Scene, scene = require 'src.scene'
+local RayMarcher = require 'src.ray-marcher'
 local keys = require 'src.utils.keys'
 local viewAngleSensitivity = 0.005
 local positionSensitivity = 30
-local Object = require 'src.scene-data.object'
-local Light = require 'src.scene-data.light'
-local Material = require 'src.scene-data.material'
 
+local scene
 function love.load()
     scene =
-        Scene(
+        RayMarcher.Scene(
         {
             maxDistance = math.sqrt(100 * 100 * 3),
             globalMinLight = 0.15,
@@ -26,12 +24,12 @@ function love.load()
     )
     scene.camera:setPosition(-40, 0, 0)
 
-    local roomMaterial = Material()
+    local roomMaterial = RayMarcher.Material()
     scene:registerMaterial(roomMaterial)
-    local red = Material({colour = {1, 0, 0}})
+    local red = RayMarcher.Material({colour = {1, 0, 0}})
     scene:registerMaterial(red)
     local green =
-        Material(
+        RayMarcher.Material(
         {
             colour = {0, 1, 0},
             reflectance = 0.4,
@@ -41,23 +39,26 @@ function love.load()
         }
     )
     scene:registerMaterial(green)
-    local blue = Material({colour = {0, 0, 1}})
+    local blue = RayMarcher.Material({colour = {0, 0, 1}})
     scene:registerMaterial(blue)
-    local chrome = Material({reflectance = 1})
+    local chrome = RayMarcher.Material({reflectance = 1})
     scene:registerMaterial(chrome)
-    local water = Material({colour = {0.6, 0.6, 1}, reflectance = 0.4, transparency = 0.7, speedOfLight = 225})
+    local water =
+        RayMarcher.Material({colour = {0.6, 0.6, 1}, reflectance = 0.4, transparency = 0.7, speedOfLight = 225})
     scene:registerMaterial(water)
-    local glass = Material({colour = {0.776, 0.886, 0.89}, reflectance = 1.0, transparency = 0.9, speedOfLight = 200})
+    local glass =
+        RayMarcher.Material({colour = {0.776, 0.886, 0.89}, reflectance = 1.0, transparency = 0.9, speedOfLight = 200})
     scene:registerMaterial(glass)
-    local diamond = Material({reflectance = 0.5, transparency = 0.8, speedOfLight = 125})
+    local diamond = RayMarcher.Material({reflectance = 0.5, transparency = 0.8, speedOfLight = 125})
     scene:registerMaterial(diamond)
-    local hidden = Material({transparency = 1, speedOfLight = 250})
+    local hidden = RayMarcher.Material({transparency = 1, speedOfLight = 250})
     scene:registerMaterial(hidden)
-    local radioactive = Material({colour = {0, 1, 0}, glowStrength = 0.1, glowRange = 0.5, glowColour = {1, 1, 0.3}})
+    local radioactive =
+        RayMarcher.Material({colour = {0, 1, 0}, glowStrength = 0.2, glowRange = 1, glowColour = {1, 1, 0.3}})
     scene:registerMaterial(radioactive)
 
     local cube =
-        Object(
+        RayMarcher.Object(
         {
             type = 'cube',
             material = red,
@@ -68,24 +69,26 @@ function love.load()
         }
     )
     scene:registerObject(cube)
-    local sphere = Object({type = 'sphere', material = hidden, position = {0, -10, 0}, data = {radius = 5}})
+    local sphere = RayMarcher.Object({type = 'sphere', material = hidden, position = {0, -10, 0}, data = {radius = 5}})
     scene:registerObject(sphere)
     local cylinder =
-        Object({type = 'cylinder', material = green, position = {0, 10, 10}, data = {radius = 5, height = 10}})
-    scene:registerObject(cylinder)
-    local mandelbulb =
-        Object(
-        {
-            type = 'mandelbulb',
-            material = radioactive,
-            position = {0, 0, 0},
-            scale = {4, 4, 4},
-            data = {iterations = 40, power = 3}
-        }
+        RayMarcher.Object(
+        {type = 'cylinder', material = green, position = {0, 10, 10}, data = {radius = 5, height = 10}}
     )
-    scene:registerObject(mandelbulb)
+    scene:registerObject(cylinder)
+    -- local mandelbulb =
+    --     RayMarcher.Object(
+    --     {
+    --         type = 'mandelbulb',
+    --         material = radioactive,
+    --         position = {0, 0, 0},
+    --         scale = {4, 4, 4},
+    --         data = {iterations = 40, power = 3}
+    --     }
+    -- )
+    -- scene:registerObject(mandelbulb)
     local room =
-        Object(
+        RayMarcher.Object(
         {
             type = 'insideCube',
             material = roomMaterial,
@@ -95,7 +98,7 @@ function love.load()
     )
     scene:registerObject(room)
     scene:registerLight(
-        Light(
+        RayMarcher.Light(
             {
                 position = {-20, -20, 0},
                 brightness = 1.2
