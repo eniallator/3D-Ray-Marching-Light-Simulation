@@ -2,6 +2,22 @@
 
 This will hold all of the configured scene properties as well as the configured objects. It also contains the camera data as well.
 
+## Method Index
+
+- [scene:registerLight](#scene:registerLight)
+- [scene:registerMaterial](#scene:registerMaterial)
+- [scene:registerObject](#scene:registerObject)
+- [scene:loadLights](#scene:loadLights)
+- [scene:loadMaterials](#scene:loadMaterials)
+- [scene:loadObjects](#scene:loadObjects)
+- [scene:loadAllData](#scene:loadAllData)
+- [scene:draw](#scene:draw)
+- [scene.camera:setPosition](#scene.camera:setPosition)
+- [scene.camera:addAbsolutePosition](#scene.camera:addAbsolutePosition)
+- [scene.camera:addRelativePosition](#scene.camera:addRelativePosition)
+- [scene.camera:setRotation](#scene.camera:setRotation)
+- [scene.camera:addRotation](#scene.camera:addRotation)
+
 ## Constructor Arguments
 
 - `maxDistance`
