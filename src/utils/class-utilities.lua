@@ -37,13 +37,13 @@ classUtilities.validateOrComplain = function(value, types, message)
     return value
 end
 
-classUtilities.rotationToMatrix = function(rotation)
-    local cosYaw = math.cos(rotation.yaw)
-    local sinYaw = math.sin(rotation.yaw)
-    local cosPitch = math.cos(rotation.pitch)
-    local sinPitch = math.sin(rotation.pitch)
-    local cosRoll = math.cos(rotation.roll)
-    local sinRoll = math.sin(rotation.roll)
+classUtilities.rotationToMatrix = function(yaw, pitch, roll)
+    local cosYaw = math.cos(yaw)
+    local sinYaw = math.sin(yaw)
+    local cosPitch = math.cos(pitch)
+    local sinPitch = math.sin(pitch)
+    local cosRoll = math.cos(roll)
+    local sinRoll = math.sin(roll)
     return {
         {
             cosYaw * cosPitch,

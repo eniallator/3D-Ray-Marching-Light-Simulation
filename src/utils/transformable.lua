@@ -9,18 +9,12 @@ return function(args)
         classUtilities.validateOrComplain(args.position, {'number', 'number', 'number'}, 'Invalid position')
     transformable.scale = classUtilities.validateOrDefault(args.scale, {1, 1, 1})
     transformable.rotationData = classUtilities.validateOrDefault(args.rotation, {0, 0, 0})
-    transformable.rotationMatrix =
-        classUtilities.rotationToMatrix(
-        {
-            yaw = transformable.rotationData[1],
-            pitch = transformable.rotationData[2],
-            roll = transformable.rotationData[3]
-        }
-    )
+    transformable.rotationMatrix = classUtilities.rotationToMatrix(unpack(transformable.rotationData))
 
     function transformable:setPosition(x, y, z)
         self.position = classUtilities.validateOrDefault({x, y, z}, self.position)
     end
+
     function transformable:addWorldPosition(x, y, z)
         local offset = classUtilities.validateOrDefault({x, y, z}, {0, 0, 0})
         self.position = {
@@ -29,6 +23,7 @@ return function(args)
             self.position[3] + offset[3]
         }
     end
+
     function transformable:addRelativePosition(x, y, z)
         local offset = classUtilities.validateOrDefault({x, y, z}, {0, 0, 0})
         self.position = {
@@ -40,16 +35,16 @@ return function(args)
                 offset[3] * self.rotationMatrix[3][3]
         }
     end
+
     function transformable:setScale(x, y, z)
         self.scale = classUtilities.validateOrDefault({x, y, z}, self.scale)
     end
+
     function transformable:setRotation(yaw, pitch, roll)
         self.rotationData = classUtilities.validateOrDefault({yaw, pitch, roll}, self.rotationData)
-        self.rotationMatrix =
-            classUtilities.rotationToMatrix(
-            {yaw = self.rotationData[1], pitch = self.rotationData[2], roll = self.rotationData[3]}
-        )
+        self.rotationMatrix = classUtilities.rotationToMatrix(unpack(self.rotationData))
     end
+
     function transformable:addRotation(yaw, pitch, roll)
         local offset = classUtilities.validateOrDefault({yaw, pitch, roll}, {0, 0, 0})
         self.rotationData = {
@@ -57,10 +52,7 @@ return function(args)
             self.rotationData[2] + offset[2],
             self.rotationData[3] + offset[3]
         }
-        self.rotationMatrix =
-            classUtilities.rotationToMatrix(
-            {yaw = self.rotationData[1], pitch = self.rotationData[2], roll = self.rotationData[3]}
-        )
+        self.rotationMatrix = classUtilities.rotationToMatrix(unpack(self.rotationData))
     end
 
     return transformable
