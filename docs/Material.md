@@ -7,7 +7,7 @@ Is a data class which has a number of configurable properties.
 - `colour`
   - **Type**: `{Number, Number, Number, Number}` all numbers in range `[0, 1]`
   - **Default**: `{1, 1, 1, 1}`
-  - **Description**: Colour of the material.
+  - **Description**: RGBA colour of the material.
 - `reflectance`
   - **Type**: `Number` in range `[0, 1]`
   - **Default**: `0`
@@ -31,7 +31,7 @@ Is a data class which has a number of configurable properties.
 - `glowColour`
   - **Type**: `{number, number, number, number}` all numbers in range `[0, 1]`
   - **Default**: `{1, 1, 1, 1}`
-  - **Description**: Colour of the glow.
+  - **Description**: RGBA colour of the glow.
 
 ### Example Constructor
 

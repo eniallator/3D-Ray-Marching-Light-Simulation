@@ -11,7 +11,7 @@ A data class which has properties for lights to shine on the scene
 - `colour`
   - **Type**: `{Number, Number, Number, Number}` all numbers in range `[0, 1]`
   - **Default**: `{1, 1, 1, 1}`
-  - **Description**: Colour of the light to shine.
+  - **Description**: RGBA colour of the light to shine.
 - `brightness`
   - **Type**: `Number` > `0`
   - **Default**: `1`
