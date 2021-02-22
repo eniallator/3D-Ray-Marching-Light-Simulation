@@ -21,7 +21,7 @@ This will hold all of the configured scene properties as well as the configured 
 ## Constructor Arguments
 
 - `maxDistance`
-  - **Type**: `Number` > 0
+  - **Type**: `Number` > `0`
   - **Default**: `200`
   - **Description**: Max view distance that the camera can see.
 - `globalMinLight`
@@ -29,27 +29,27 @@ This will hold all of the configured scene properties as well as the configured 
   - **Default**: `0`
   - **Description**: Minimum global light level throughout the scene.
 - `lightMaxRange`
-  - **Type**: `Number` > 0
+  - **Type**: `Number` > `0`
   - **Default**: `200`
   - **Description**: Max range a light can shine.
 - `collisionTolerance`
-  - **Type**: `Number` > 0
+  - **Type**: `Number` > `0`
   - **Default**: `0.1`
   - **Description**: Controls how detailed (and how sharp things like edges are) the scene is. Lower values take more time to compute, but yields a more detailed scene.
 - `samplesPerPixelPerAxis`
-  - **Type**: `Number (Integer)` > 0
+  - **Type**: `Number (Integer)` > `0`
   - **Default**: `2`
   - **Description**: For anti-aliasing - How many samples to take for blending.
 - `maxReflections`
-  - **Type**: `Number (Integer)` > 0
+  - **Type**: `Number (Integer)` > `0`
   - **Default**: `3`
   - **Description**: Max reflections a ray can have.
 - `maxRefractionDepth`
-  - **Type**: `Number (Integer)` > 0
+  - **Type**: `Number (Integer)` > `0`
   - **Default**: `4`
   - **Description**: How many object boundaries (e.g if the object is transparent, when the ray meets the object and goes into it, that counts as crossing a boundary) a ray can cross.
 - `spaceSpeedOfLight`
-  - **Type**: `Number` > 0
+  - **Type**: `Number` > `0`
   - **Default**: `300`
   - **Description**: Speed of light for rays when they aren't inside an object.
 - `softShadowAngle`
@@ -57,11 +57,11 @@ This will hold all of the configured scene properties as well as the configured 
   - **Default**: `0`
   - **Description**: How large the soft shadows are when light shines on objects
 - `ambientOcclusionSamples`
-  - **Type**: `Number (Integer)` ≥ 0
+  - **Type**: `Number (Integer)` ≥ `0`
   - **Default**: `0`
   - **Description**: how many samples to take when computing the ambient occlusion. The more samples, the better the blend, but also more time to compute.
 - `ambientOcclusionMaxHeight`
-  - **Type**: `Number` > 0
+  - **Type**: `Number` > `0`
   - **Default**: `0`
   - **Description**: How far away the last sample will be for computing ambient occlusion.
 - `ambientOcclusionStrength`
