@@ -23,7 +23,7 @@ A data class containing properties and methods for all objects
   - **Required**
   - **Description**: What type of material to render the object with.
 - `data`
-  - **Type**: `Table` containing custom properties for the `type` of object. Property defined:
+  - **Type**: `Table` containing custom properties for the `type` of object. Properties defined:
     - `cube`: `{width = Number > 0, height = Number > 0, depth = Number > 0}`
     - `insideCube`: `{width = Number > 0, height = Number > 0, depth = Number > 0}`
     - `sphere`: `{radius = Number > 0}`
@@ -47,8 +47,7 @@ A data class containing properties and methods for all objects
 ### Example Constructor
 
 ```lua
-room =
-RayMarcher.Object({
+room = RayMarcher.Object({
     type = 'insideCube',
     material = roomMaterial,
     data = {width = 100, height = 100, depth = 100},
@@ -67,7 +66,7 @@ Sets new data for the current object.
 _**Arguments**_:
 
 - `newData`
-  - **Type**: `ObjectData` see [here](#L15) for types
+  - **Type**: `ObjectData` see the `data` [constructor argument](#constructor-arguments) for types
   - **Description**: New data to set.
 
 _**Example Usage**_:
