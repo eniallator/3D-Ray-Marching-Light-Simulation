@@ -2,6 +2,16 @@
 
 A data class containing properties and methods for all objects
 
+## Method Index
+
+- [object:setData](#objectsetData)
+- [object:setPosition](#objectsetPosition)
+- [object:addAbsolutePosition](#objectaddAbsolutePosition)
+- [object:addRelativePosition](#objectaddRelativePosition)
+- [object:setScale](#objectsetScale)
+- [object:setRotation](#objectsetRotation)
+- [object:addRotation](#objectaddRotation)
+
 ## Constructor Arguments
 
 - `type`
