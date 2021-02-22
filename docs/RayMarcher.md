@@ -10,6 +10,6 @@ Has 4 main classes:
 ## Example Usage
 
 ```lua
-local RayMarcher = require 'path.to.RayMarcher'
-local Scene = RayMarcher.Scene()
+RayMarcher = require 'path.to.RayMarcher'
+Scene = RayMarcher.Scene()
 ```
