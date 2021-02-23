@@ -22,7 +22,7 @@ classUtilities.validateOrComplain = function(value, types, message)
     if types == type(value) and type(value) ~= 'table' then
         return value
     end
-    if type(types) ~= 'table' and types == type(value) then
+    if type(types) ~= 'table' or type(value) ~= 'table' then
         error(message)
     end
 
