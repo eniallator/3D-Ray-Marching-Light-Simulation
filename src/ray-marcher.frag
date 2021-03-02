@@ -321,6 +321,7 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in Ray ray) {
         mediump float distanceTravelled = 0.0;
         Ray shadowRay = Ray(lightPositions[i].xyz, normalize(-lightPositions[i] + ray.pos), -1);
 
+        // Calculating ambient occlusion
         float ambientOcclusionModifier = 1.0;
         for (int i = 1; i <= ambientOcclusionSamples; i ++) {
             float height = i * ambientOcclusionMaxHeight / ambientOcclusionSamples;
@@ -333,6 +334,7 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in Ray ray) {
         }
         ambientOcclusionModifier = 1 - (1 - ambientOcclusionModifier) * ambientOcclusionStrength;
 
+        // Calculating the angle that the light hits the object
         highp float normDot = dot(shadowRay.dirNorm, rayClosestObject.surfaceNormal);
         if (normDot > 0) {
             continue;
@@ -342,10 +344,12 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in Ray ray) {
         highp float lightAngleVisibility = length(normDot)
             / (length(shadowRay.dirNorm) * length(rayClosestObject.surfaceNormal));
 
+        // Calculating if an object is in between the point and the light source
         highp ObjectData closestPathObject = ObjectData(-1, -1, maxDistance, vec3(0), vec4(0), vec4(0), 0.0);
         highp vec3 closestPathPos = shadowRay.pos;
 
         while (distanceTravelled < dist - collisionTolerance && pointVisibility > 0.05) {
+            // If not in the way, calculate the soft shadow
             highp ObjectData closestObject = distanceEstimator(shadowRay);
             highp float theta = asin(closestPathObject.dist / length(shadowRay.pos - closestPathPos));
             pointVisibility = min(theta / softShadowAngle, pointVisibility);
@@ -362,6 +366,7 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in Ray ray) {
             }
             shadowRay.pos += shadowRay.dirNorm * closestObject.dist;
         }
+        // Inverse square law and putting it together
         highp float inverseDist = 1 - dist / lightMaxRange;
         outColour += rayClosestObject.colour * lightColours[i]
             * inverseDist * inverseDist
@@ -373,6 +378,8 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in Ray ray) {
     return max(outColour, rayClosestObject.colour * globalMinLight);
 }
 
+// Ray marching activation record struct, since GLSL does not support recursion
+// Needed to handle both reflection + refraction
 struct RayMarchAR {
     Ray ray;
     int refractionDepth;
@@ -392,10 +399,14 @@ mediump vec4 rayMarch(in Ray ray) {
     lowp int lastStackIndex = 0;
     RayMarchAR ar = stackFrames[0];
     highp float raySpeed = ar.ray.inMaterial < 0 ? spaceSpeedOfLight : materialSpeedsOfLight[ar.ray.inMaterial];
+
+    // These variables hold the output colour - the colour will be divided by the strength in the end
     vec4 accumulatedColour = vec4(0.0, 0.0, 0.0, 1.0);
     float accumulatedStrength = 1.0;
+
     while (stackIndex >= 0) {
         if (lastStackIndex != stackIndex) {
+            // Update the current ar variable
             stackFrames[lastStackIndex] = ar;
             ar = stackFrames[stackIndex];
             raySpeed = ar.ray.inMaterial < 0 ? spaceSpeedOfLight : materialSpeedsOfLight[ar.ray.inMaterial];
@@ -405,23 +416,33 @@ mediump vec4 rayMarch(in Ray ray) {
             stackIndex -= 1;
             continue;
         }
+
+        // Getting scene data
         highp ObjectData closestObject = distanceEstimator(ar.ray);
         highp float objSpeedOfLight = materialSpeedsOfLight[closestObject.materialIndex];
         closestObject.dist = abs(closestObject.dist);
         ar.distanceTravelled += closestObject.dist;
+
+        // If the object glows, add the glow
         accumulatedColour += closestObject.emittedColour * ar.rayStrength;
         accumulatedStrength += closestObject.emittedStrength * ar.rayStrength;
+
         if (closestObject.dist < collisionTolerance) {
+            // Collided with an object, so get the objects colour and add it to the accumulated variables
             float strength = ar.rayStrength
                 * (1 - materialReflectances[closestObject.materialIndex])
                 * (1 - materialTransparencies[closestObject.materialIndex]);
             accumulatedStrength += strength;
             accumulatedColour += strength * lightPoint(closestObject, ar.ray);
+
+            // If the ray can go no further, throw out the current activation record
             ar.reflections += 1;
             if (ar.reflections > maxReflections || ar.rayStrength < 0.05) {
                 stackIndex -= 1;
                 continue;
             }
+
+            // Refractions
             vec3 boundaryNormal = dot(closestObject.surfaceNormal, ar.ray.dirNorm) >= 0
                 ? -closestObject.surfaceNormal
                 : closestObject.surfaceNormal;
@@ -431,11 +452,12 @@ mediump vec4 rayMarch(in Ray ray) {
             float cosI = dot(boundaryNormal, ar.ray.dirNorm);
             float cosRSqr = 1 - (n * n * (1 - cosI * cosI));
             if (
-                cosRSqr >= 0
+                cosRSqr >= 0 // If there is an angle of refraction (if not, it's total internal reflection)
                 && materialTransparencies[closestObject.materialIndex] > 0.0
                 && ar.refractionDepth < maxRefractionDepth
                 && stackIndex < rayMarchMaxStackSize - 1
             ) {
+                // Make an activation record to handle the refracted ray
                 vec3 refractedDir = n * (ar.ray.dirNorm - cosI * boundaryNormal) - sqrt(cosRSqr) * boundaryNormal;
                 stackIndex += 1;
                 stackFrames[stackIndex] = RayMarchAR(
@@ -451,11 +473,14 @@ mediump vec4 rayMarch(in Ray ray) {
                 );
                 ar.rayStrength *= 1 - materialTransparencies[closestObject.materialIndex];
             }
+
+            // Handling reflections
             ar.rayStrength *= materialReflectances[closestObject.materialIndex];
             ar.distanceTravelled = 0.0;
             ar.ray.dirNorm -= 2 * dot(ar.ray.dirNorm, -closestObject.surfaceNormal) * -closestObject.surfaceNormal;
             ar.ray.pos += ar.ray.dirNorm * collisionTolerance;
         }
+        // Move the ray forward
         ar.ray.pos += ar.ray.dirNorm * closestObject.dist;
     }
     return accumulatedColour / accumulatedStrength;
