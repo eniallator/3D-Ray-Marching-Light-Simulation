@@ -3,7 +3,7 @@ local keys = require 'src.utils.keys'
 local viewAngleSensitivity = 0.005
 local positionSensitivity = 30
 
-local scene
+local scene, cube
 function love.load()
     scene =
         RayMarcher.Scene(
@@ -54,39 +54,39 @@ function love.load()
     local hidden = RayMarcher.Material({transparency = 1, speedOfLight = 250})
     scene:registerMaterial(hidden)
     local radioactive =
-        RayMarcher.Material({colour = {0, 1, 0}, glowStrength = 0.2, glowRange = 1, glowColour = {1, 1, 0.3}})
+        RayMarcher.Material({colour = {0, 1, 0}, glowStrength = 0.2, glowRange = 0.3, glowColour = {1, 1, 0.3}})
     scene:registerMaterial(radioactive)
 
-    local cube =
-        RayMarcher.Object(
-        {
-            type = 'cube',
-            material = red,
-            position = {0, 10, -10},
-            scale = {1, 2, 1},
-            rotation = {math.pi / 4, math.pi / 4, 0},
-            data = {width = 10, height = 10, depth = 10}
-        }
-    )
-    scene:registerObject(cube)
-    local sphere = RayMarcher.Object({type = 'sphere', material = hidden, position = {0, -10, 0}, data = {radius = 5}})
-    scene:registerObject(sphere)
-    local cylinder =
-        RayMarcher.Object(
-        {type = 'cylinder', material = green, position = {0, 10, 10}, data = {radius = 5, height = 10}}
-    )
-    scene:registerObject(cylinder)
-    -- local mandelbulb =
+    -- cube =
     --     RayMarcher.Object(
     --     {
-    --         type = 'mandelbulb',
-    --         material = radioactive,
-    --         position = {0, 0, 0},
-    --         scale = {4, 4, 4},
-    --         data = {iterations = 40, power = 3}
+    --         type = 'cube',
+    --         material = red,
+    --         position = {0, 10, -10},
+    --         scale = {1, 2, 1},
+    --         rotation = {math.pi / 4, math.pi / 4, 0},
+    --         data = {width = 9.77, height = 9.77, depth = 9.77}
     --     }
     -- )
-    -- scene:registerObject(mandelbulb)
+    -- scene:registerObject(cube)
+    -- local sphere = RayMarcher.Object({type = 'sphere', material = hidden, position = {0, -10, 0}, data = {radius = 5}})
+    -- scene:registerObject(sphere)
+    -- local cylinder =
+    --     RayMarcher.Object(
+    --     {type = 'cylinder', material = green, position = {0, 10, 10}, data = {radius = 5, height = 10}}
+    -- )
+    -- scene:registerObject(cylinder)
+    local mandelbulb =
+        RayMarcher.Object(
+        {
+            type = 'mandelbulb',
+            material = radioactive,
+            position = {0, 0, 0},
+            scale = {4, 4, 4},
+            data = {iterations = 30, power = 3, boundingRadius = 7}
+        }
+    )
+    scene:registerObject(mandelbulb)
     local room =
         RayMarcher.Object(
         {
@@ -141,6 +141,9 @@ function love.update(dt)
         relativePosOffset.y = relativePosOffset.y - positionSensitivity * dt
     end
     scene.camera:addRelativePosition(relativePosOffset.x, relativePosOffset.y, relativePosOffset.z)
+    -- cube:addRotation(0, 0, dt)
+    -- cube:addRelativePosition(0, 0, dt * 10)
+    -- scene:loadObjects()
 end
 
 function love.draw(dt)

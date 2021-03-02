@@ -4,6 +4,7 @@
 #define rayMarchMaxStackSize 6
 #define rayCollisionOffset collisionTolerance * 8
 #define mandelbulbBailNumber 100
+#define boundingOffset collisionTolerance * 6
 
 uniform lowp vec2 dimensions;
 uniform lowp float maxDistance;
@@ -256,44 +257,57 @@ uniform lowp int mandelbulbMaterial[numObjectsPerType];
 uniform lowp vec3 mandelbulbPosition[numObjectsPerType];
 uniform lowp vec3 mandelbulbScale[numObjectsPerType];
 uniform lowp mat3 mandelbulbRotation[numObjectsPerType];
-uniform lowp vec2 mandelbulbData[numObjectsPerType];
+uniform lowp vec3 mandelbulbData[numObjectsPerType];
 highp ObjectData mandelbulbDistanceEstimator(in Ray ray, ObjectData closestObject) {
     for (int i = 0; i < mandelbulbCount; i ++) {
-        float iterations = mandelbulbData[i].x;
-        float power = mandelbulbData[i].y;
-        vec3 relativePos = applyTransformation(mandelbulbPosition[i] - ray.pos, mandelbulbScale[i], mandelbulbRotation[i]);
-        vec3 z = relativePos;
-        float dr = 1.0;
-        float r = 0.0;
-        for (int j = 0; j < iterations; j++) {
-            r = length(z);
-            if (r > mandelbulbBailNumber) break;
+        float boundingRadius = mandelbulbData[i].z;
+        vec3 posDiff = mandelbulbPosition[i] - ray.pos;
+        float posDiffSquared = posDiff.x * posDiff.x + posDiff.y * posDiff.y + posDiff.z * posDiff.z;
+        float dist;
+        vec3 relativePos = posDiff;
+        bool inBounds = false;
+        if (posDiffSquared > boundingRadius * boundingRadius) {
+            dist = sqrt(posDiffSquared) - boundingRadius + boundingOffset;
+        } else {
+            inBounds = true;
+            float iterations = mandelbulbData[i].x;
+            float power = mandelbulbData[i].y;
+            relativePos = applyTransformation(posDiff, mandelbulbScale[i], mandelbulbRotation[i]);
+            vec3 z = relativePos;
+            float dr = 1.0;
+            float r = 0.0;
+            for (int j = 0; j < iterations; j++) {
+                r = length(z);
+                if (r > mandelbulbBailNumber) break;
 
-            float theta = acos(z.z / r);
-            float phi = atan(z.y, z.x);
-            dr = pow(r, power-1.0) * power * dr + 1.0;
+                float theta = acos(z.z / r);
+                float phi = atan(z.y, z.x);
+                dr = pow(r, power-1.0) * power * dr + 1.0;
 
-            float zr = pow(r, power);
-            theta *= power;
-            phi *= power;
+                float zr = pow(r, power);
+                theta *= power;
+                phi *= power;
 
-            z = zr * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
-            z += relativePos;
+                z = zr * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+                z += relativePos;
+            }
+            dist = (log(r) * r) / (2 * dr);
         }
-        highp float dist = (log(r) * r) / (2 * dr);
         if (dist < closestObject.dist) {
             closestObject = ObjectData(
                 i + 4 * numObjectsPerType,
                 mandelbulbMaterial[i],
                 dist,
-                undoRotation(-normalize(relativePos), mandelbulbRotation[i]),
+                inBounds ? undoRotation(-normalize(relativePos), mandelbulbRotation[i]) : -normalize(relativePos),
                 vec4(0.0),
                 closestObject.emittedColour,
                 closestObject.emittedStrength
             );
             setColour(closestObject);
         }
-        setGlow(closestObject, mandelbulbMaterial[i], dist);
+        if (inBounds) {
+            setGlow(closestObject, mandelbulbMaterial[i], dist);
+        }
     }
     return closestObject;
 }

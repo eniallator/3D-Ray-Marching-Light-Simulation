@@ -31,8 +31,8 @@ local OBJECT_HANDLERS = {
     end,
     ['mandelbulb'] = function(data)
         return classUtilities.validateOrComplain(
-            {data.iterations, data.power},
-            {'number', 'number'},
+            {data.iterations, data.power, data.boundingRadius},
+            {'number', 'number', 'number'},
             'Invalid mandelbulb data'
         )
     end

@@ -28,7 +28,7 @@ A data class containing properties and methods for all objects
     - `insideCube`: `{width = Number > 0, height = Number > 0, depth = Number > 0}`
     - `sphere`: `{radius = Number > 0}`
     - `cylinder`: `{radius = Number > 0, height = Number > 0}`
-    - `mandelbulb`: `{power = Number > 0, iterations = Number (Integer) > 0}`
+    - `mandelbulb`: `{power = Number > 0, iterations = Number (Integer) > 0, boundingRadius = Number > 0}`
   - **Required**
   - **Description**: Defines the properties for each of the object types.
 - `position`
