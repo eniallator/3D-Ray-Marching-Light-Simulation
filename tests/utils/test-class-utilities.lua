@@ -2,19 +2,19 @@ local classUtilities = require 'src.utils.class-utilities'
 
 local test = {}
 
-function test.validateOrComplainValidNoTable()
+function test.validateOrComplain_ValidNoTable()
     classUtilities.validateOrComplain(1, 'number')
 end
 
-function test.validateOrComplainValidFlatTable()
+function test.validateOrComplain_ValidFlatTable()
     classUtilities.validateOrComplain({1, true, 'foo'}, {'number', 'boolean', 'string'})
 end
 
-function test.validateOrComplainValidNestedTable()
+function test.validateOrComplain_ValidNestedTable()
     classUtilities.validateOrComplain({{1, true, 'foo'}, 1}, {{'number', 'boolean', 'string'}, 'number'})
 end
 
-function test.validateOrComplainInvalidNoTable()
+function test.validateOrComplain_InvalidNoTable()
     local success, msg =
         pcall(
         function()
@@ -24,7 +24,7 @@ function test.validateOrComplainInvalidNoTable()
     assert(not success, msg)
 end
 
-function test.validateOrComplainInvalidFlatTable()
+function test.validateOrComplain_InvalidFlatTable()
     local success, msg =
         pcall(
         function()
@@ -34,7 +34,7 @@ function test.validateOrComplainInvalidFlatTable()
     assert(not success, msg)
 end
 
-function test.validateOrComplainInvalidNestedTable()
+function test.validateOrComplain_InvalidNestedTable()
     local success, msg =
         pcall(
         function()

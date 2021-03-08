@@ -1,5 +1,39 @@
 require 'lfs'
 
+function assertEquals(val, other)
+    -- Handling non-tables
+    if type(val) ~= 'table' then
+        assert(val == other)
+    end
+    if type(other) ~= 'table' then
+        error()
+    end
+
+    -- Checking if they have the same set of keys
+    local keys, key, _ = {}
+    for key, _ in pairs(val) do
+        keys[key] = ''
+    end
+    for key, _ in pairs(other) do
+        if keys[key] == nil then
+            error()
+        end
+        keys[key] = nil
+    end
+    for key, _ in pairs(keys) do
+        error()
+    end
+
+    -- Same keys
+    for key, _ in pairs(val) do
+        if type(val[key]) == 'table' then
+            assertEquals(val[key], other[key])
+        else
+            assert(val[key] == other[key])
+        end
+    end
+end
+
 local function walk(dir, files)
     local files = files or {}
 
