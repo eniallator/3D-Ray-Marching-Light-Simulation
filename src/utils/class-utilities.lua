@@ -9,7 +9,7 @@ classUtilities.validateOrDefault = function(value, default)
 
     local tbl = {}
     for key, defaultValue in pairs(default) do
-        if value[key] == nil or type(value[key]) ~= type(defaultValue) then
+        if type(defaultValue) ~= 'table' and (value[key] == nil or type(value[key]) ~= type(defaultValue)) then
             tbl[key] = defaultValue
         else
             tbl[key] = classUtilities.validateOrDefault(value[key], defaultValue)
@@ -27,7 +27,7 @@ classUtilities.validateOrComplain = function(value, types, message)
     end
 
     for key, defaultType in pairs(types) do
-        if value[key] == nil or type(value[key]) ~= defaultType then
+        if type(defaultType) ~= 'table' and (value[key] == nil or type(value[key]) ~= defaultType) then
             error(message)
         else
             classUtilities.validateOrComplain(value[key], defaultType, message)
