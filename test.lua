@@ -68,7 +68,7 @@ for i = 1, #test_files do
             local success, errMsg = pcall(func)
             if not success then
                 numFailures = numFailures + 1
-                failures[testId] = errMsg
+                failures[testId] = errMsg or 'NO_STACKTRACE'
             end
             print(testId .. ' | ' .. (success and 'PASSED' or 'FAILED'))
         end
