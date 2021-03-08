@@ -43,7 +43,7 @@ local function walk(dir, files)
         if file:sub(1, 1) ~= '.' then
             if lfs.attributes(path, 'mode') == 'directory' then
                 walk(path, files)
-            elseif path:sub(-3) == 'lua' then
+            elseif path:sub(-4) == '.lua' then
                 table.insert(files, path)
             end
         end
