@@ -466,7 +466,7 @@ mediump vec4 rayMarch(in Ray ray) {
             float cosI = dot(boundaryNormal, ar.ray.dirNorm);
             float cosRSqr = 1 - (n * n * (1 - cosI * cosI));
             if (
-                cosRSqr >= 0 // If there is an angle of refraction (if not, it's total internal reflection)
+                cosRSqr > 0 // If there is an angle of refraction (if not, it's total internal reflection)
                 && materialTransparencies[closestObject.materialIndex] > 0.0
                 && ar.refractionDepth < maxRefractionDepth
                 && stackIndex < rayMarchMaxStackSize - 1

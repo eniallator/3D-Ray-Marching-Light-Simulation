@@ -127,9 +127,9 @@ return function(args)
     end
 
     function scene:draw(x, y, width, height)
-        assert(self.cache.objects, 'Tried drawing without objects being loaded')
-        assert(self.cache.materials, 'Tried drawing without materials being loaded')
-        assert(self.cache.lights, 'Tried drawing without lights being loaded')
+        assert(#self.objects > 0 and self.cache.objects, 'Tried drawing without objects being loaded')
+        assert(#self.materials > 0 and self.cache.materials, 'Tried drawing without materials being loaded')
+        assert(#self.lights > 0 and self.cache.lights, 'Tried drawing without lights being loaded')
 
         local oldShader = love.graphics.getShader()
 
