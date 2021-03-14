@@ -36,6 +36,10 @@ uniform highp float materialTransparencies[numMaterials];
 uniform highp float materialGlowStrengths[numMaterials];
 uniform highp float materialGlowRanges[numMaterials];
 uniform highp vec4 materialGlowColours[numMaterials];
+uniform lowp int materialRefractionIndex[numMaterials];
+uniform sampler2D materialRefractionAngles;
+uniform lowp int numTransparentMaterials;
+uniform lowp int numRefractionAngleIntervals;
 
 struct ObjectData {
     mediump int id;
@@ -463,16 +467,34 @@ mediump vec4 rayMarch(in Ray ray) {
 
             float n = objSpeedOfLight / raySpeed;
 
+            int rayIndex = materialRefractionIndex[ar.ray.inMaterial];
+            int objIndex = materialRefractionIndex[closestObject.materialIndex];
             float cosI = dot(boundaryNormal, ar.ray.dirNorm);
-            float cosRSqr = 1 - (n * n * (1 - cosI * cosI));
+
+            float cosR;
+            vec2 angleCoords = vec2(
+                (rayIndex * numTransparentMaterials + objIndex - 1) / ((1 + numTransparentMaterials) * numTransparentMaterials),
+                cosI
+            );
+            int pixIndex = int(mod(floor(numRefractionAngleIntervals * cosI), 4));
+            if (pixIndex == 0){
+                cosR = Texel(materialRefractionAngles, angleCoords).r;
+            } else if (pixIndex == 1){
+                cosR = Texel(materialRefractionAngles, angleCoords).g;
+            } else if (pixIndex == 2){
+                cosR = Texel(materialRefractionAngles, angleCoords).b;
+            } else if (pixIndex == 3){
+                cosR = Texel(materialRefractionAngles, angleCoords).a;
+            }
+
             if (
-                cosRSqr > 0 // If there is an angle of refraction (if not, it's total internal reflection)
-                && materialTransparencies[closestObject.materialIndex] > 0.0
+                cosR > 0 // If there is an angle of refraction (if not, it's total internal reflection)
+                && objIndex > 0
                 && ar.refractionDepth < maxRefractionDepth
                 && stackIndex < rayMarchMaxStackSize - 1
             ) {
                 // Make an activation record to handle the refracted ray
-                vec3 refractedDir = n * (ar.ray.dirNorm - cosI * boundaryNormal) - sqrt(cosRSqr) * boundaryNormal;
+                vec3 refractedDir = n * (ar.ray.dirNorm - cosI * boundaryNormal) - cosR * boundaryNormal;
                 stackIndex += 1;
                 stackFrames[stackIndex] = RayMarchAR(
                     Ray(

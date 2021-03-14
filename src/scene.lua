@@ -22,6 +22,7 @@ return function(args)
     scene.ambientOcclusionSamples = args.ambientOcclusionSamples or 0
     scene.ambientOcclusionMaxHeight = args.ambientOcclusionMaxHeight or 0
     scene.ambientOcclusionStrength = args.ambientOcclusionStrength or 0
+    scene.numRefractionAngleIntervals = args.numRefractionAngleIntervals or 32
     scene.configRefreshed = true
 
     scene.objects = {}
@@ -73,6 +74,8 @@ return function(args)
             glowStrength = {},
             glowRange = {},
             glowColour = {},
+            refractionIndex = {},
+            transparentMaterials = {},
             refreshed = true
         }
         if self.cache.objects then
@@ -91,6 +94,47 @@ return function(args)
             table.insert(self.cache.materials.glowStrength, material.glowStrength)
             table.insert(self.cache.materials.glowRange, material.glowRange)
             table.insert(self.cache.materials.glowColour, material.glowColour)
+            if material.transparency > 0 then
+                table.insert(self.cache.materials.transparentMaterials, material)
+                table.insert(self.cache.materials.refractionIndex, #self.cache.materials.transparentMaterials)
+            else
+                table.insert(self.cache.materials.refractionIndex, 0)
+            end
+        end
+        -- Generating a lookup table of angles of refraction
+        if #self.cache.materials.transparentMaterials > 0 then
+            local refractionAngles =
+                love.image.newImageData(
+                (1 + #self.cache.materials.transparentMaterials) * #self.cache.materials.transparentMaterials,
+                math.ceil(self.numRefractionAngleIntervals / 4)
+            )
+            local i, j, k, l
+            for i = 0, #self.cache.materials.transparentMaterials do
+                local outerSpeed =
+                    i == 0 and self.spaceSpeedOfLight or self.cache.materials.transparentMaterials[i].speedOfLight
+                for j = 1, #self.cache.materials.transparentMaterials do
+                    local innerSpeed =
+                        j == i and self.spaceSpeedOfLight or self.cache.materials.transparentMaterials[j].speedOfLight
+                    local n = innerSpeed / outerSpeed
+                    for k = 0, math.ceil(self.numRefractionAngleIntervals / 4) - 1 do
+                        local pixel = {}
+                        for l = 0, math.min(3, self.numRefractionAngleIntervals - k * 4) do
+                            local cosI = (k * 4 + l) / (self.numRefractionAngleIntervals - 1)
+                            local cosRSqr = 1 - (n * n * (1 - cosI * cosI))
+                            table.insert(pixel, cosRSqr > 0 and math.sqrt(cosRSqr) or 0)
+                        end
+                        for l = 1, 4 - #pixel do
+                            table.insert(pixel, 0)
+                        end
+                        refractionAngles:setPixel(
+                            i * #self.cache.materials.transparentMaterials + j - 1,
+                            k,
+                            unpack(pixel)
+                        )
+                    end
+                end
+            end
+            self.cache.materials.refractionAngles = love.graphics.newImage(refractionAngles)
         end
     end
 
@@ -176,6 +220,10 @@ return function(args)
             rayMarchingShader:send('materialGlowStrengths', unpack(self.cache.materials.glowStrength))
             rayMarchingShader:send('materialGlowRanges', unpack(self.cache.materials.glowRange))
             rayMarchingShader:send('materialGlowColours', unpack(self.cache.materials.glowColour))
+            rayMarchingShader:send('materialRefractionIndex', unpack(self.cache.materials.refractionIndex))
+            rayMarchingShader:send('materialRefractionAngles', self.cache.materials.refractionAngles)
+            rayMarchingShader:send('numTransparentMaterials', #self.cache.materials.transparentMaterials)
+            rayMarchingShader:send('numRefractionAngleIntervals', self.numRefractionAngleIntervals)
         end
 
         if self.cache.objects.refreshed then

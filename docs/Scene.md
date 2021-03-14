@@ -68,6 +68,10 @@ This will hold all of the configured scene properties as well as the configured 
   - **Type**: `Number` in range `[0, 1]`
   - **Default**: `0`
   - **Description**: How dark a fully occluded spot will be
+- `numRefractionAngleIntervals`
+  - **Type**: `Number (Integer)` > `0`
+  - **Default**: `32`
+  - **Description**: How many angles a refracted ray can have - more angles means more accurate refraction, but more initial computation and storage.
 
 ### Example Constructor
 
