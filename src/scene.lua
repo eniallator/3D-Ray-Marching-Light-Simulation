@@ -22,7 +22,7 @@ return function(args)
     scene.ambientOcclusionSamples = args.ambientOcclusionSamples or 0
     scene.ambientOcclusionMaxHeight = args.ambientOcclusionMaxHeight or 0
     scene.ambientOcclusionStrength = args.ambientOcclusionStrength or 0
-    scene.numRefractionAngleIntervals = args.numRefractionAngleIntervals or 32
+    scene.numRefractionAngleIntervals = args.numRefractionAngleIntervals or 64
     scene.configRefreshed = true
 
     scene.objects = {}

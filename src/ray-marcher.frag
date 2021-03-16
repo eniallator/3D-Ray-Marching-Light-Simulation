@@ -471,6 +471,7 @@ mediump vec4 rayMarch(in Ray ray) {
             int objIndex = materialRefractionIndex[closestObject.materialIndex];
             float cosI = dot(boundaryNormal, ar.ray.dirNorm);
 
+            // Looking up the angle of refraction
             float cosR;
             vec2 angleCoords = vec2(
                 (rayIndex * numTransparentMaterials + objIndex - 1) / ((1 + numTransparentMaterials) * numTransparentMaterials),

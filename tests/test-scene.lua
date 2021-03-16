@@ -1,12 +1,18 @@
 love = {
     graphics = {
         newShader = function()
+            return 'shader'
         end,
         newImage = function()
+            return 'image'
         end
     },
     image = {
         newImageData = function()
+            return {
+                setPixel = function()
+                end
+            }
         end
     }
 }
@@ -44,30 +50,28 @@ end
 
 function test.loadMaterials()
     local scene = Scene()
-    scene:registerMaterial(
-        {
-            class = 'Material',
-            colour = {1, 2, 3},
-            reflectance = 1,
-            speedOfLight = 2,
-            transparency = 3,
-            glowStrength = 4,
-            glowRange = 5,
-            glowColour = {3, 2, 1}
-        }
-    )
-    scene:registerMaterial(
-        {
-            class = 'Material',
-            colour = {4, 5, 6},
-            reflectance = 6,
-            speedOfLight = 7,
-            transparency = 8,
-            glowStrength = 9,
-            glowRange = 10,
-            glowColour = {6, 5, 4}
-        }
-    )
+    local mat1 = {
+        class = 'Material',
+        colour = {1, 2, 3},
+        reflectance = 1,
+        speedOfLight = 2,
+        transparency = 3,
+        glowStrength = 4,
+        glowRange = 5,
+        glowColour = {3, 2, 1}
+    }
+    local mat2 = {
+        class = 'Material',
+        colour = {4, 5, 6},
+        reflectance = 6,
+        speedOfLight = 7,
+        transparency = 8,
+        glowStrength = 9,
+        glowRange = 10,
+        glowColour = {6, 5, 4}
+    }
+    scene:registerMaterial(mat1)
+    scene:registerMaterial(mat2)
     scene:loadMaterials()
     assertEquals(
         scene.cache.materials,
@@ -79,7 +83,10 @@ function test.loadMaterials()
             glowStrength = {4, 9},
             glowRange = {5, 10},
             glowColour = {{3, 2, 1}, {6, 5, 4}},
-            refreshed = true
+            refreshed = true,
+            refractionAngles = 'image',
+            refractionIndex = {1, 2},
+            transparentMaterials = {mat1, mat2}
         }
     )
 end

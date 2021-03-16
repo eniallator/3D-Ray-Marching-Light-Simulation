@@ -3,10 +3,10 @@ require 'lfs'
 function assertEquals(val, other)
     -- Handling non-tables
     if type(val) ~= 'table' then
-        assert(val == other)
+        assert(val == other, 'Different values: ' .. tostring(val) .. ' and ' .. tostring(other))
     end
     if type(other) ~= 'table' then
-        error()
+        error('Different types: table and ' .. type(other))
     end
 
     -- Checking if they have the same set of keys
@@ -16,12 +16,12 @@ function assertEquals(val, other)
     end
     for key, _ in pairs(other) do
         if keys[key] == nil then
-            error()
+            error('Other table does not contain the following key: ' .. tostring(key))
         end
         keys[key] = nil
     end
     for key, _ in pairs(keys) do
-        error()
+        error('Value table does not contain the following key: ' .. tostring(key))
     end
 
     -- Same keys
@@ -29,7 +29,11 @@ function assertEquals(val, other)
         if type(val[key]) == 'table' then
             assertEquals(val[key], other[key])
         else
-            assert(val[key] == other[key])
+            assert(
+                val[key] == other[key],
+                'Different values for key: ' ..
+                    tostring(key) .. '\nval1: ' .. tostring(val[key]) .. '\nval2: ' .. tostring(other[key])
+            )
         end
     end
 end

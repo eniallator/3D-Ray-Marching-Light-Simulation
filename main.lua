@@ -17,7 +17,7 @@ function love.load()
             maxRefractionDepth = 3,
             spaceSpeedOfLight = 300,
             softShadowAngle = 0.02,
-            ambientOcclusionSamples = 5,
+            ambientOcclusionSamples = 3,
             ambientOcclusionMaxHeight = 3,
             ambientOcclusionStrength = 0.2
         }
