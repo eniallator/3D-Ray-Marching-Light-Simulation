@@ -213,6 +213,9 @@ return function(args)
 
         if self.cache.materials.refreshed and #self.cache.materials.colour > 0 then
             self.cache.materials.refreshed = false
+            if self.cache.materials.refractionAngles then
+                rayMarchingShader:send('materialRefractionAngles', self.cache.materials.refractionAngles)
+            end
             rayMarchingShader:send('materialColours', unpack(self.cache.materials.colour))
             rayMarchingShader:send('materialReflectances', unpack(self.cache.materials.reflectance))
             rayMarchingShader:send('materialSpeedsOfLight', unpack(self.cache.materials.speedOfLight))
@@ -221,7 +224,6 @@ return function(args)
             rayMarchingShader:send('materialGlowRanges', unpack(self.cache.materials.glowRange))
             rayMarchingShader:send('materialGlowColours', unpack(self.cache.materials.glowColour))
             rayMarchingShader:send('materialRefractionIndex', unpack(self.cache.materials.refractionIndex))
-            rayMarchingShader:send('materialRefractionAngles', self.cache.materials.refractionAngles)
             rayMarchingShader:send('numTransparentMaterials', #self.cache.materials.transparentMaterials)
             rayMarchingShader:send('numRefractionAngleIntervals', self.numRefractionAngleIntervals)
         end
