@@ -11,12 +11,14 @@ return function(args)
     transformable.rotationData = classUtilities.validateOrDefault(args.rotation, {0, 0, 0})
     transformable.rotationMatrix = classUtilities.rotationToMatrix(unpack(transformable.rotationData))
 
-    function transformable:setPosition(x, y, z)
-        self.position = classUtilities.validateOrDefault({x, y, z}, self.position)
+    function transformable:setPosition(xOrVec, y, z)
+        local pos = classUtilities.getOverloadedVector({xOrVec, y, z})
+        self.position = classUtilities.validateOrDefault(pos, self.position)
     end
 
-    function transformable:addAbsolutePosition(x, y, z)
-        local offset = classUtilities.validateOrDefault({x, y, z}, {0, 0, 0})
+    function transformable:addAbsolutePosition(xOrVec, y, z)
+        local pos = classUtilities.getOverloadedVector({xOrVec, y, z})
+        local offset = classUtilities.validateOrDefault(pos, {0, 0, 0})
         self.position = {
             self.position[1] + offset[1],
             self.position[2] + offset[2],
@@ -24,8 +26,9 @@ return function(args)
         }
     end
 
-    function transformable:addRelativePosition(x, y, z)
-        local offset = classUtilities.validateOrDefault({x, y, z}, {0, 0, 0})
+    function transformable:addRelativePosition(xOrVec, y, z)
+        local pos = classUtilities.getOverloadedVector({xOrVec, y, z})
+        local offset = classUtilities.validateOrDefault(pos, {0, 0, 0})
         self.position = {
             self.position[1] + offset[1] * self.rotationMatrix[1][1] + offset[2] * self.rotationMatrix[1][2] +
                 offset[3] * self.rotationMatrix[1][3],
@@ -36,17 +39,20 @@ return function(args)
         }
     end
 
-    function transformable:setScale(x, y, z)
-        self.scale = classUtilities.validateOrDefault({x, y, z}, self.scale)
+    function transformable:setScale(xOrVec, y, z)
+        local scale = classUtilities.getOverloadedVector({xOrVec, y, z})
+        self.scale = classUtilities.validateOrDefault(scale, self.scale)
     end
 
-    function transformable:setRotation(yaw, pitch, roll)
-        self.rotationData = classUtilities.validateOrDefault({yaw, pitch, roll}, self.rotationData)
+    function transformable:setRotation(yawOrVec, pitch, roll)
+        local rot = classUtilities.getOverloadedVector({yawOrVec, pitch, roll})
+        self.rotationData = classUtilities.validateOrDefault(rot, self.rotationData)
         self.rotationMatrix = classUtilities.rotationToMatrix(unpack(self.rotationData))
     end
 
-    function transformable:addRotation(yaw, pitch, roll)
-        local offset = classUtilities.validateOrDefault({yaw, pitch, roll}, {0, 0, 0})
+    function transformable:addRotation(yawOrVec, pitch, roll)
+        local rot = classUtilities.getOverloadedVector({yawOrVec, pitch, roll})
+        local offset = classUtilities.validateOrDefault(rot, {0, 0, 0})
         self.rotationData = {
             self.rotationData[1] + offset[1],
             self.rotationData[2] + offset[2],

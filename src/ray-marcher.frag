@@ -215,7 +215,7 @@ uniform lowp vec3 cylinderPosition[numObjectsPerType];
 uniform lowp vec3 cylinderScale[numObjectsPerType];
 uniform lowp mat3 cylinderRotation[numObjectsPerType];
 uniform lowp vec2 cylinderData[numObjectsPerType];
-highp ObjectData cylinderDistanceEstimator(in Ray ray, ObjectData closestObject) {
+ObjectData cylinderDistanceEstimator(in Ray ray, ObjectData closestObject) {
     for (int i = 0; i < cylinderCount; i ++) {
         vec3 relativePos = applyTransformation(cylinderPosition[i] - ray.pos, cylinderScale[i], cylinderRotation[i]);
         float radius = cylinderData[i].x;
@@ -262,7 +262,7 @@ uniform lowp vec3 mandelbulbPosition[numObjectsPerType];
 uniform lowp vec3 mandelbulbScale[numObjectsPerType];
 uniform lowp mat3 mandelbulbRotation[numObjectsPerType];
 uniform lowp vec3 mandelbulbData[numObjectsPerType];
-highp ObjectData mandelbulbDistanceEstimator(in Ray ray, ObjectData closestObject) {
+ObjectData mandelbulbDistanceEstimator(in Ray ray, ObjectData closestObject) {
     for (int i = 0; i < mandelbulbCount; i ++) {
         float boundingRadius = mandelbulbData[i].z;
         vec3 posDiff = mandelbulbPosition[i] - ray.pos;
@@ -317,7 +317,7 @@ highp ObjectData mandelbulbDistanceEstimator(in Ray ray, ObjectData closestObjec
 }
 
 
-highp ObjectData distanceEstimator(in Ray ray) {
+ObjectData distanceEstimator(in Ray ray) {
     ObjectData closestObject = ObjectData(-1, -1, maxDistance, vec3(0), vec4(0), vec4(0), 0.0);
     closestObject = cubeDistanceEstimator(ray, closestObject);
     closestObject = insideCubeDistanceEstimator(ray, closestObject);
@@ -339,6 +339,16 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in Ray ray) {
         mediump float distanceTravelled = 0.0;
         Ray shadowRay = Ray(lightPositions[i].xyz, normalize(-lightPositions[i] + ray.pos), -1);
 
+        // Calculating the angle that the light hits the object
+        highp float normDot = dot(shadowRay.dirNorm, rayClosestObject.surfaceNormal);
+        if (normDot > 0) {
+            continue;
+        }
+
+        highp float pointVisibility = 1.0;
+        highp float lightAngleVisibility = length(normDot)
+            / (length(shadowRay.dirNorm) * length(rayClosestObject.surfaceNormal));
+
         // Calculating ambient occlusion
         float ambientOcclusionModifier = 1.0;
         for (int i = 1; i <= ambientOcclusionSamples; i ++) {
@@ -352,23 +362,13 @@ highp vec4 lightPoint(in ObjectData rayClosestObject, in Ray ray) {
         }
         ambientOcclusionModifier = 1 - (1 - ambientOcclusionModifier) * ambientOcclusionStrength;
 
-        // Calculating the angle that the light hits the object
-        highp float normDot = dot(shadowRay.dirNorm, rayClosestObject.surfaceNormal);
-        if (normDot > 0) {
-            continue;
-        }
-
-        highp float pointVisibility = 1.0;
-        highp float lightAngleVisibility = length(normDot)
-            / (length(shadowRay.dirNorm) * length(rayClosestObject.surfaceNormal));
-
         // Calculating if an object is in between the point and the light source
-        highp ObjectData closestPathObject = ObjectData(-1, -1, maxDistance, vec3(0), vec4(0), vec4(0), 0.0);
+        ObjectData closestPathObject = ObjectData(-1, -1, maxDistance, vec3(0), vec4(0), vec4(0), 0.0);
         highp vec3 closestPathPos = shadowRay.pos;
 
         while (distanceTravelled < dist - collisionTolerance && pointVisibility > 0.05) {
             // If not in the way, calculate the soft shadow
-            highp ObjectData closestObject = distanceEstimator(shadowRay);
+            ObjectData closestObject = distanceEstimator(shadowRay);
             highp float theta = asin(closestPathObject.dist / length(shadowRay.pos - closestPathPos));
             pointVisibility = min(theta / softShadowAngle, pointVisibility);
             if (abs(closestObject.dist) < abs(closestPathObject.dist)) {
@@ -436,7 +436,7 @@ mediump vec4 rayMarch(in Ray ray) {
         }
 
         // Getting scene data
-        highp ObjectData closestObject = distanceEstimator(ar.ray);
+        ObjectData closestObject = distanceEstimator(ar.ray);
         highp float objSpeedOfLight = materialSpeedsOfLight[closestObject.materialIndex];
         closestObject.dist = abs(closestObject.dist);
         ar.distanceTravelled += closestObject.dist;

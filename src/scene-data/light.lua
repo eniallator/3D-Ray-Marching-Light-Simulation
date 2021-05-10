@@ -12,7 +12,9 @@ return function(args)
         {'number', 'number', 'number'},
         'Lights must have a position argument'
     )
-    light.colour = classUtilities.validateOrDefault(args.colour, {1, 1, 1, 1})
+    light.colour = classUtilities.validateOrDefault(args.colour, {1, 1, 1})
+    table.insert(light.colour, 1)
+
     light.brightness = classUtilities.validateOrDefault(args.brightness, 1)
 
     return light

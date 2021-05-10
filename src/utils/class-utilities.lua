@@ -63,4 +63,11 @@ classUtilities.rotationToMatrix = function(yaw, pitch, roll)
     }
 end
 
+classUtilities.getOverloadedVector = function(tbl)
+    if type(tbl[1]) == 'table' then
+        return tbl[1]
+    end
+    return tbl
+end
+
 return classUtilities
