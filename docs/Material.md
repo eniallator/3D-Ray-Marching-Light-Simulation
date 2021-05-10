@@ -1,13 +1,14 @@
 # Material
 
+[Back to RayMarcher](./RayMarcher.md)\
 Is a data class which has a number of configurable properties.
 
 ## Constructor Arguments
 
 - `colour`
-  - **Type**: `{Number, Number, Number, Number}` all numbers in range `[0, 1]`
-  - **Default**: `{1, 1, 1, 1}`
-  - **Description**: RGBA colour of the material.
+  - **Type**: `{Number, Number, Number}` all numbers in range `[0, 1]`
+  - **Default**: `{1, 1, 1}`
+  - **Description**: RGB colour of the material.
 - `reflectance`
   - **Type**: `Number` in range `[0, 1]`
   - **Default**: `0`
@@ -29,9 +30,9 @@ Is a data class which has a number of configurable properties.
   - **Default**: `0`
   - **Description**: How far the glow reaches.
 - `glowColour`
-  - **Type**: `{number, number, number, number}` all numbers in range `[0, 1]`
-  - **Default**: `{1, 1, 1, 1}`
-  - **Description**: RGBA colour of the glow.
+  - **Type**: `{number, number, number}` all numbers in range `[0, 1]`
+  - **Default**: `{1, 1, 1}`
+  - **Description**: RGB colour of the glow.
 
 ### Example Constructor
 

@@ -1,5 +1,6 @@
 # Scene Class
 
+[Back to RayMarcher](./RayMarcher.md)\
 This will hold all of the configured scene properties as well as the configured objects. It also contains the camera data as well.
 
 ## Method Index
@@ -17,6 +18,7 @@ This will hold all of the configured scene properties as well as the configured 
 - [scene.camera:addRelativePosition](#scenecameraaddRelativePosition)
 - [scene.camera:setRotation](#scenecamerasetRotation)
 - [scene.camera:addRotation](#scenecameraaddRotation)
+- [scene.camera:setViewportDist](#scenecamerasetviewportdist)
 
 ## Constructor Arguments
 
@@ -51,7 +53,7 @@ This will hold all of the configured scene properties as well as the configured 
 - `spaceSpeedOfLight`
   - **Type**: `Number` > `0`
   - **Default**: `300`
-  - **Description**: Speed of light for rays when they aren't inside an object.
+  - **Description**: Speed of light for rays when they aren't inside an object. This affects the angle of refraction.
 - `softShadowAngle`
   - **Type**: `Number` in range `[0, pi]`
   - **Default**: `0`
@@ -59,7 +61,7 @@ This will hold all of the configured scene properties as well as the configured 
 - `ambientOcclusionSamples`
   - **Type**: `Number (Integer)` ≥ `0`
   - **Default**: `0`
-  - **Description**: how many samples to take when computing the ambient occlusion. The more samples, the better the blend, but also more time to compute.
+  - **Description**: how many samples to take when computing the [ambient occlusion](https://en.wikipedia.org/wiki/Ambient_occlusion). The more samples, the better the blend, but also more time to compute.
 - `ambientOcclusionMaxHeight`
   - **Type**: `Number` > `0`
   - **Default**: `0`
@@ -101,7 +103,7 @@ Adds a light to the scene.
 _**Arguments**_:
 
 - `light`
-  - **Type**: `Light`
+  - **Type**: [Light](./Light.md)
   - **Description**: Light to add.
 
 _**Example Usage**_:
@@ -117,7 +119,7 @@ Adds a material to the scene.
 _**Arguments**_:
 
 - `material`
-  - **Type**: `Material`
+  - **Type**: [Material](./Material.md)
   - **Description**: Material to add.
 
 _**Example Usage**_:
@@ -133,7 +135,7 @@ Adds an object to the scene.
 _**Arguments**_:
 
 - `object`
-  - **Type**: `Object`
+  - **Type**: [Object](./Object.md)
   - **Description**: Object to add.
 
 _**Example Usage**_:
@@ -164,7 +166,7 @@ scene:loadMaterials()
 
 ### **scene:loadObjects**
 
-Loads and prepares all objects in the scene to be ready for drawing. This method must be called _after_ the [scene:loadMaterials](#scene:loadMaterials) method.
+Loads and prepares all objects in the scene to be ready for drawing. This method must be called _after_ the [scene:loadMaterials](#sceneloadMaterials) method.
 
 _**Example Usage**_:
 
@@ -336,4 +338,21 @@ _**Example Usage**_:
 
 ```lua
 scene.camera:addRotation(0.1, 0.2, 0.3)
+```
+
+### **scene.camera:setViewportDist**
+
+Sets the camera's viewport distance - this controls the field of vision that the camera sees.
+
+_**Arguments**_:
+
+- `dist`
+  - **Type**: `Number`
+  - **Default**: `1`
+  - **Description**: The new distance to set
+
+_**Example Usage**_:
+
+```lua
+scene.camera:setViewportDist(0.7)
 ```

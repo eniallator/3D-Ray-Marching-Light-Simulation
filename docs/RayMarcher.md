@@ -11,5 +11,5 @@ Has 4 main classes:
 
 ```lua
 RayMarcher = require 'path.to.RayMarcher'
-Scene = RayMarcher.Scene()
+scene = RayMarcher.Scene()
 ```

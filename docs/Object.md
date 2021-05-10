@@ -1,5 +1,6 @@
 # Object
 
+[Back to RayMarcher](./RayMarcher.md)\
 A data class containing properties and methods for all objects
 
 ## Method Index
@@ -19,7 +20,7 @@ A data class containing properties and methods for all objects
   - **Required**
   - **Description**: Defines what type of object to render.
 - `material`
-  - **Type**: `Material`
+  - **Type**: [Material](./Material.md)
   - **Required**
   - **Description**: What type of material to render the object with.
 - `data`
